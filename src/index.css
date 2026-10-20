@@ -4,7 +4,7 @@
 @font-face { font-family:Quicksand; src:url('/fonts/Quicksand-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
 :root { --paper:#fff9e9; --ink:#580a0a; --body-ink:#58443b; --tan:#b49880; --rule:#580a0a33; font-family:Quicksand,system-ui,sans-serif; font-synthesis:none; text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; color:var(--ink); background:var(--paper); }
 * { box-sizing:border-box; }
-html { scroll-behavior:smooth; scroll-padding-top:6rem; }
+html { scroll-behavior:smooth; }
 body { margin:0; min-width:320px; }
 h1,h2,h3,h4 { font-family:Kovanov,Georgia,serif; font-weight:700; }
 a { color:inherit; }

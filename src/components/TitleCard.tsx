@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import GlobeDrawing from './GlobeDrawing';
+import SceneBoundary from './SceneBoundary';
 import { useReveal } from '../lib/useReveal';
 const Globe=lazy(()=>import('../assets/globe_3d'));
 
@@ -29,7 +30,7 @@ export default function TitleCard() {
       </div>
       <div className="stem-orb" ref={orb} aria-hidden="true">
         <span className="orb-label">CURIOSITY KNOWS NO BORDERS</span>
-        <Suspense fallback={<GlobeDrawing/>}>{enhance?<Globe/>:<GlobeDrawing/>}</Suspense>
+        <SceneBoundary fallback={<GlobeDrawing/>}><Suspense fallback={<GlobeDrawing/>}>{enhance?<Globe/>:<GlobeDrawing/>}</Suspense></SceneBoundary>
         <span className="orb-footnote">LET HER STORY INSPIRE YOURS</span>
       </div>
     </div>

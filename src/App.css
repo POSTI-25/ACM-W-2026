@@ -139,7 +139,7 @@
 
 @media (max-width: 48rem) {
   html {
-    scroll-padding-top: 3.75rem;
+    scroll-padding-top: 0;
   }
 
   .desktop-envelope-navbar {
