@@ -1,4 +1,4 @@
-import { useId, useEffect, useRef, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -8,40 +8,41 @@ import C2C from "../assets/C2C.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/**
- * Gentle scroll parallax on the stamp. Writes `transform` straight to the
- * element from a scrubbed ScrollTrigger — no React state per scroll frame
- * (which re-rendered the whole section) and no CSS transition on transform
- * (which made the stamp lag a beat behind the page). `scrub: true` means it
- * tracks the scrollbar exactly; the drift is only ever a few vh.
- */
-function useParallax(driftVh = 5) {
+/** A long upward glide, measured against a stationary padded stage. */
+function useParallax(index: number) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    // Drift up the whole way; pop to ~1.07× as the stamp crosses the middle
-    // of the viewport, then settle back to 1 as it leaves.
-    const tl = gsap.timeline({
-      defaults: { ease: "none" },
-      scrollTrigger: {
-        trigger: el,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: 0.4,
-      },
-    });
-    tl.fromTo(el, { y: `${driftVh}vh` }, { y: `${-driftVh}vh`, duration: 1 }, 0)
-      .fromTo(el, { scale: 1 }, { scale: 1.07, duration: 0.5, ease: "power1.out" }, 0)
-      .to(el, { scale: 1, duration: 0.5, ease: "power1.in" }, 0.5);
-
-    return () => {
-      tl.scrollTrigger?.kill();
-      tl.kill();
-    };
-  }, [driftVh]);
+  useLayoutEffect(() => {
+    const card = ref.current;
+    if (!card) return;
+    const media = gsap.matchMedia();
+    media.add({
+      motion: '(prefers-reduced-motion: no-preference)',
+      compact: '(max-width: 56.25rem)',
+    }, context => {
+      if (!context.conditions?.motion) return;
+      const compact = Boolean(context.conditions.compact);
+      const direction = index % 2 === 0 ? -1 : 1;
+      gsap.fromTo(card, {
+        y: () => Math.min(innerHeight * (compact ? .2 : .28), compact ? 160 : 220),
+        rotation: direction * 10,
+      }, {
+        y: () => -Math.min(innerHeight * (compact ? .16 : .24), compact ? 130 : 200),
+        rotation: direction * 6,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: card.parentElement,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onToggle: self => { card.style.willChange = self.isActive ? 'transform' : 'auto'; },
+        },
+      });
+      return () => { card.style.removeProperty('will-change'); };
+    }, card);
+    return () => { media.revert(); card.style.removeProperty('will-change'); };
+  }, [index]);
 
   return ref;
 }
@@ -182,9 +183,9 @@ const events = [
 ];
 
 export default function EventsPage() {
-  const stamp1 = useParallax(4);
-  const stamp2 = useParallax(6);
-  const stamp3 = useParallax(5);
+  const stamp1 = useParallax(0);
+  const stamp2 = useParallax(1);
+  const stamp3 = useParallax(2);
 
   const parallaxRefs = [stamp1, stamp2, stamp3];
 
@@ -210,13 +211,13 @@ export default function EventsPage() {
                 }`}
               >
                 <div
-                  className={`flex justify-center ${
+                  className={`event-stamp-stage flex justify-center py-[clamp(4rem,10vh,7rem)] max-[56.25rem]:py-[clamp(3rem,8vh,5rem)] ${
                     reverse ? "order-2 max-[56.25rem]:order-none" : ""
                   }`}
                 >
                   <div
                     ref={parallaxRef}
-                    className="w-full max-w-[min(50vw,45rem)] max-[56.25rem]:max-w-[min(86vw,38.75rem)]"
+                    className="event-stamp-float w-[86%] max-w-[min(44vw,42rem)] max-[56.25rem]:max-w-[min(76vw,36rem)]"
                     style={{
                       rotate: `${reverse ? 8 : -8}deg`,
                     }}

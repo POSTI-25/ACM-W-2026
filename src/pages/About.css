@@ -32,8 +32,8 @@ body,
    page scrolls on the main scrollbar — no inner scroll container. */
 .about_section {
   position: relative;
-  width: 82%;
-  margin-left: 3%;
+  width: 78%;
+  margin-left: 8%;
   padding-top: 0;
 }
 
@@ -41,7 +41,7 @@ body,
    so it paints on top without needing a z-index. */
 .about_section--top {
   width: 76%;
-  margin-left: 20%;
+  margin-left: 16%;
   margin-top: clamp(-22rem, -20vw, -8rem);
   padding-bottom: clamp(3rem, 7vh, 3.75rem);
 }
@@ -150,13 +150,13 @@ body,
   }
 
   .about_section {
-    width: 92%;
-    margin-left: 1%;
+    width: 88%;
+    margin-left: 6%;
     padding-top: 0;
   }
 
   .about_section--top {
-    width: 90%;
+    width: 86%;
     margin-left: 8%;
     margin-top: -35vw;
     padding-bottom: clamp(1.25rem, 3vh, 1.75rem);

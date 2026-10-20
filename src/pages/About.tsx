@@ -40,19 +40,19 @@ export default function About() {
         // Both photos share one scroll range; the foreground postcard travels
         // farther, like the overlapping archival photos in the reference.
         gsap.fromTo(card, {
-          y: () => window.innerHeight * (index === 0 ? (compact ? .1 : .16) : (compact ? .38 : .8)),
+          y: () => window.innerHeight * (index === 0 ? (compact ? .2 : .35) : (compact ? .5 : .9)),
           x: 0,
           rotation: 0,
         }, {
-          y: () => -window.innerHeight * (index === 0 ? (compact ? .08 : .14) : (compact ? .16 : .28)),
-          x: () => (index === 0 ? -1 : 1) * window.innerWidth * (compact ? .008 : .015),
+          y: () => -window.innerHeight * (index === 0 ? (compact ? .14 : .24) : (compact ? .28 : .42)),
+          x: () => (index === 0 ? -1 : 1) * window.innerWidth * (compact ? .004 : .008),
           rotation: index === 0 ? -1.5 : 1.5,
           ease: 'none',
           scrollTrigger: {
             trigger: element,
             start: 'top bottom',
             end: 'bottom top',
-            scrub: .8,
+            scrub: 1,
             invalidateOnRefresh: true,
             onToggle: self => {
               card.style.willChange = self.isActive ? 'transform' : 'auto'
