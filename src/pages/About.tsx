@@ -40,11 +40,11 @@ export default function About() {
         // Both photos share one scroll range; the foreground postcard travels
         // farther, like the overlapping archival photos in the reference.
         gsap.fromTo(card, {
-          y: () => window.innerHeight * (index === 0 ? (compact ? .04 : .08) : (compact ? .5 : .9)),
+          y: () => window.innerHeight * (index === 0 ? (compact ? .2 : .35) : (compact ? .5 : .9)),
           x: 0,
           rotation: 0,
         }, {
-          y: () => -window.innerHeight * (index === 0 ? (compact ? .1 : .18) : (compact ? .28 : .42)),
+          y: () => -window.innerHeight * (index === 0 ? (compact ? .14 : .24) : (compact ? .28 : .42)),
           x: () => (index === 0 ? -1 : 1) * window.innerWidth * (compact ? .004 : .008),
           rotation: index === 0 ? -1.5 : 1.5,
           ease: 'none',
