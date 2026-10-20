@@ -37,21 +37,22 @@ export default function About() {
       if (!context.conditions?.motion) return
       const compact = Boolean(context.conditions.compact)
       element.querySelectorAll<HTMLElement>('.about_card-wrap').forEach((card, index) => {
-        // Measure the stationary section, so moving the card never moves its trigger.
+        // Both photos share one scroll range; the foreground postcard travels
+        // farther, like the overlapping archival photos in the reference.
         gsap.fromTo(card, {
-          y: () => Math.min(window.innerHeight * (compact ? .12 : .2), compact ? 88 : 180),
-          rotation: index === 0 ? 1.4 : -1.4,
-          scale: .98,
-        }, {
-          y: 0,
+          y: () => window.innerHeight * (index === 0 ? (compact ? .1 : .16) : (compact ? .38 : .8)),
+          x: 0,
           rotation: 0,
-          scale: 1,
+        }, {
+          y: () => -window.innerHeight * (index === 0 ? (compact ? .08 : .14) : (compact ? .16 : .28)),
+          x: () => (index === 0 ? -1 : 1) * window.innerWidth * (compact ? .008 : .015),
+          rotation: index === 0 ? -1.5 : 1.5,
           ease: 'none',
           scrollTrigger: {
-            trigger: card.parentElement,
+            trigger: element,
             start: 'top bottom',
-            end: 'top 18%',
-            scrub: .65,
+            end: 'bottom top',
+            scrub: .8,
             invalidateOnRefresh: true,
             onToggle: self => {
               card.style.willChange = self.isActive ? 'transform' : 'auto'

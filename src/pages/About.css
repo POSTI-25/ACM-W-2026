@@ -23,21 +23,26 @@ body,
 .about_cards {
   display: flex;
   flex-direction: column;
-  /* Pulls the whole pair up toward the hero above. */
-  margin-top: clamp(-6rem, -5vw, -2.25rem);
+  width: min(100%, 1520px);
+  margin: 0 auto;
+  padding-top: clamp(2rem, 4vw, 4rem);
 }
 
 /* Sections sit in normal document flow, sized by their card, so the whole
    page scrolls on the main scrollbar — no inner scroll container. */
 .about_section {
   position: relative;
+  width: 82%;
+  margin-left: 3%;
   padding-top: 0;
 }
 
 /* Second card rides over the bottom of the first. Later in the DOM,
    so it paints on top without needing a z-index. */
 .about_section--top {
-  margin-top: clamp(-12rem, -10vw, -4.5rem);
+  width: 76%;
+  margin-left: 20%;
+  margin-top: clamp(-22rem, -20vw, -8rem);
   padding-bottom: clamp(3rem, 7vh, 3.75rem);
 }
 
@@ -141,15 +146,19 @@ body,
   }
 
   .about_cards {
-    margin-top: clamp(-3rem, -6vw, -1rem);
+    margin-top: 0;
   }
 
   .about_section {
+    width: 92%;
+    margin-left: 1%;
     padding-top: 0;
   }
 
   .about_section--top {
-    margin-top: clamp(-6rem, -12vw, -2rem);
+    width: 90%;
+    margin-left: 8%;
+    margin-top: -35vw;
     padding-bottom: clamp(1.25rem, 3vh, 1.75rem);
   }
 
@@ -177,7 +186,7 @@ body,
 
 @media (max-width: 30rem) {
   .about_cards {
-    margin-top: clamp(-2.25rem, -6vw, -0.75rem);
+    margin-top: 0;
   }
 
   .about_section {
@@ -185,7 +194,7 @@ body,
   }
 
   .about_section--top {
-    margin-top: clamp(-4.5rem, -11vw, -1.5rem);
+    margin-top: -38vw;
     padding-bottom: clamp(0.75rem, 2vh, 1.25rem);
   }
 
