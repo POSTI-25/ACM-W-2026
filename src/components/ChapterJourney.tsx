@@ -1,6 +1,8 @@
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import featherSilhouette from '../assets/decor/black-feather.svg';
+import spilledInk from '../assets/decor/spilled-ink.svg';
 import './ChapterJourney.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -11,27 +13,6 @@ function Plane() {
 
 function Spark() {
   return <svg viewBox="0 0 160 160" fill="none"><path d="M80 12c0 48-20 68-68 68 48 0 68 20 68 68 0-48 20-68 68-68-48 0-68-20-68-68Z"/><circle cx="80" cy="80" r="25"/><path d="m29 29 20 20m62 62 20 20M29 131l20-20m62-62 20-20"/></svg>;
-}
-
-function FeatherPen() {
-  return <svg viewBox="0 0 240 380" fill="none">
-    <path d="M210 22C139 23 85 73 72 132l19-9-26 35c-8 43 10 84 26 100 60-30 105-88 117-142l-18 11 24-39c5-28 6-48-4-66Z" fill="currentColor" fillOpacity=".09"/>
-    <path d="M40 358C90 284 117 206 210 22M88 226l40-11M78 203l65-24M70 178l86-33M77 141l95-34M89 110l95-42M117 76l78-26M128 215l48-24M143 179l51-36M156 145l47-40M172 107l39-39M184 68l30-28M40 358l22-42 14 14-36 28Z"/>
-    <path d="M48 346l15-18M35 365c-16 7-11 13 2 9"/>
-  </svg>;
-}
-
-function InkBottle() {
-  return <svg viewBox="0 0 220 260" fill="none">
-    <rect x="76" y="18" width="68" height="27" rx="5" fill="currentColor" fillOpacity=".12"/>
-    <path d="M87 23v17m11-17v17m12-17v17m12-17v17m11-17v17M84 45v37c0 9-39 13-42 36l-5 100c-1 17 10 25 25 25h96c15 0 26-8 25-25l-5-100c-3-23-42-27-42-36V45M84 62h52M47 119h126M48 223h124"/>
-    <path d="M47 164q63-18 126 0l3 54q0 13-17 13H61q-17 0-17-13Z" fill="currentColor" fillOpacity=".3"/>
-    <rect x="62" y="126" width="96" height="66" rx="4" fill="#fff9e9" fillOpacity=".75"/>
-    <rect x="68" y="132" width="84" height="54" rx="2"/>
-    <text x="110" y="167" textAnchor="middle" className="journey-ink-label">INK</text>
-    <path d="m49 114 22-16m-23 29 17-10m89-19 17 16M51 197l-1 15m113-97 5 32"/>
-    <ellipse cx="111" cy="249" rx="88" ry="5" fill="currentColor" fillOpacity=".1" stroke="none"/>
-  </svg>;
 }
 
 function Orbit({ label = 'ACM-W · VIT · IDEAS IN MOTION' }: { label?: string }) {
@@ -68,6 +49,7 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
     const measure = () => {
       const y = events.offsetTop + innerHeight * .24;
       const radius = Math.hypot(element.clientWidth / 2, Math.max(y, element.offsetHeight - y));
+      element.style.setProperty('--journey-events-y', `${events.offsetTop}px`);
       element.style.setProperty('--journey-portal-y', `${y}px`);
       element.style.setProperty('--journey-diameter', `${Math.ceil(radius * 2 + 80)}px`);
     };
@@ -97,6 +79,14 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
         attr: { 'stroke-dashoffset': 0 }, ease: 'none',
         scrollTrigger: { trigger: element, start: 'top 70%', end: 'bottom 60%', scrub: .7 },
       });
+      // Bound drift to the title surround; solid artwork never reaches event copy.
+      element.querySelectorAll<HTMLElement>('[data-stationery]').forEach(asset => {
+        const quill = asset.dataset.stationery === 'quill';
+        gsap.fromTo(asset, { y: () => Math.min(24, innerWidth * .035), rotation: quill ? -5 : 3 }, {
+          y: () => -Math.min(24, innerWidth * .035), rotation: quill ? 6 : -3, ease: 'none',
+          scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -30%', scrub: 1.5, invalidateOnRefresh: true },
+        });
+      });
       element.querySelectorAll<HTMLElement>('[data-journey-drift]').forEach((asset, index) => {
         const depth = Number(asset.dataset.journeyDrift);
         gsap.fromTo(asset, { y: () => innerHeight * .16 * depth, rotation: index % 2 ? 12 : -14 }, {
@@ -123,8 +113,8 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
       </svg>
       <div className="journey-portal"><div className="journey-portal-art"><Orbit/></div></div>
       <div className="journey-asset journey-asset--spark" data-journey-drift=".7"><Spark/></div>
-      <div className="journey-asset journey-asset--quill" data-journey-drift="1.5"><FeatherPen/></div>
-      <div className="journey-asset journey-asset--ink" data-journey-drift="1.1"><InkBottle/></div>
+      <div className="journey-asset journey-asset--quill" data-stationery="quill"><img src={featherSilhouette} alt="" width={260} height={560} decoding="async" draggable={false}/></div>
+      <div className="journey-asset journey-asset--ink" data-stationery="ink"><img src={spilledInk} alt="" width={380} height={240} decoding="async" draggable={false}/></div>
       <div className="journey-asset journey-asset--orbit" data-journey-drift=".65"><Orbit label="CREATE · CONNECT · EXPLORE"/></div>
       <div className="journey-asset journey-asset--letter" data-journey-drift="1.3"><SealedLetter/></div>
       <div className="journey-asset journey-asset--send" data-journey-drift="1.8"><Plane/></div>
