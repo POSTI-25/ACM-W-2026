@@ -69,9 +69,16 @@ body,
 }
 
 .about_polaroid-img {
+  /* The source canvas includes 8% bleed on each edge so its rotated frame
+     has four complete corners. Compensate here to preserve the original
+     artwork scale and keep the overlaid text in the same coordinates. */
+  position: absolute;
+  top: -8%;
+  left: -8%;
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 116%;
+  height: 116%;
+  max-width: none;
   filter: brightness(0.82);
 }
 
