@@ -12,6 +12,7 @@ import TeamPage from "./pages/TeamPage";
 import WomenInStem from "./pages/WomenInStem";
 import Footer from "./components/Footer";
 import TitleCard from "./components/TitleCard";
+import ChapterJourney, { ChapterTrail } from "./components/ChapterJourney";
 
 import "./App.css";
 
@@ -77,18 +78,21 @@ export default function App() {
         <PostcardLoader />
       </section>
 
-      <section id="about">
-        <About />
-      </section>
+      <ChapterJourney>
+        <section id="about">
+          <About />
+        </section>
 
-      <section id="events">
-        <Events />
-      </section>
+        <section id="events">
+          <Events />
+        </section>
+      </ChapterJourney>
 
       <section id="best-chapter">
         <BestChapter />
       </section>
 
+      <ChapterTrail />
       <section id="blogs">
         <BlogStamps />
       </section>
