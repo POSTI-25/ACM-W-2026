@@ -13,6 +13,27 @@ function Spark() {
   return <svg viewBox="0 0 160 160" fill="none"><path d="M80 12c0 48-20 68-68 68 48 0 68 20 68 68 0-48 20-68 68-68-48 0-68-20-68-68Z"/><circle cx="80" cy="80" r="25"/><path d="m29 29 20 20m62 62 20 20M29 131l20-20m62-62 20-20"/></svg>;
 }
 
+function FeatherPen() {
+  return <svg viewBox="0 0 240 380" fill="none">
+    <path d="M210 22C139 23 85 73 72 132l19-9-26 35c-8 43 10 84 26 100 60-30 105-88 117-142l-18 11 24-39c5-28 6-48-4-66Z" fill="currentColor" fillOpacity=".09"/>
+    <path d="M40 358C90 284 117 206 210 22M88 226l40-11M78 203l65-24M70 178l86-33M77 141l95-34M89 110l95-42M117 76l78-26M128 215l48-24M143 179l51-36M156 145l47-40M172 107l39-39M184 68l30-28M40 358l22-42 14 14-36 28Z"/>
+    <path d="M48 346l15-18M35 365c-16 7-11 13 2 9"/>
+  </svg>;
+}
+
+function InkBottle() {
+  return <svg viewBox="0 0 220 260" fill="none">
+    <rect x="76" y="18" width="68" height="27" rx="5" fill="currentColor" fillOpacity=".12"/>
+    <path d="M87 23v17m11-17v17m12-17v17m12-17v17m11-17v17M84 45v37c0 9-39 13-42 36l-5 100c-1 17 10 25 25 25h96c15 0 26-8 25-25l-5-100c-3-23-42-27-42-36V45M84 62h52M47 119h126M48 223h124"/>
+    <path d="M47 164q63-18 126 0l3 54q0 13-17 13H61q-17 0-17-13Z" fill="currentColor" fillOpacity=".3"/>
+    <rect x="62" y="126" width="96" height="66" rx="4" fill="#fff9e9" fillOpacity=".75"/>
+    <rect x="68" y="132" width="84" height="54" rx="2"/>
+    <text x="110" y="167" textAnchor="middle" className="journey-ink-label">INK</text>
+    <path d="m49 114 22-16m-23 29 17-10m89-19 17 16M51 197l-1 15m113-97 5 32"/>
+    <ellipse cx="111" cy="249" rx="88" ry="5" fill="currentColor" fillOpacity=".1" stroke="none"/>
+  </svg>;
+}
+
 function Orbit({ label = 'ACM-W · VIT · IDEAS IN MOTION' }: { label?: string }) {
   const id = useId().replace(/:/g, '');
   return <svg viewBox="0 0 500 500" fill="none">
@@ -24,8 +45,13 @@ function Orbit({ label = 'ACM-W · VIT · IDEAS IN MOTION' }: { label?: string }
   </svg>;
 }
 
-function Brackets() {
-  return <svg viewBox="0 0 200 220" fill="none"><path d="M68 20c-48 0-20 70-50 90 30 20 2 90 50 90M132 20c48 0 20 70 50 90-30 20-2 90-50 90M117 65l-34 90"/><circle cx="100" cy="110" r="78" strokeDasharray="2 8"/></svg>;
+function SealedLetter() {
+  return <svg viewBox="0 0 240 190" fill="none">
+    <rect x="13" y="30" width="214" height="143" rx="5" fill="#fff9e9" fillOpacity=".3"/>
+    <path d="m13 30 101 82q6 5 12 0l101-82M13 173l84-74m130 74-84-74"/>
+    <circle cx="120" cy="111" r="19" fill="currentColor" fillOpacity=".18"/>
+    <circle cx="120" cy="111" r="14"/><path d="m120 101 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/>
+  </svg>;
 }
 
 const route = 'M790 -40C1090 150 210 210 340 480S1060 700 850 940 130 1050 300 1330 1090 1550 880 1810 120 2020 370 2440';
@@ -52,18 +78,19 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const select = gsap.utils.selector(element);
       const colorReveal = gsap.timeline({
-        defaults: { ease: 'power2.inOut' },
-        scrollTrigger: { trigger: events, start: 'top bottom', end: 'top 12%', scrub: 1, invalidateOnRefresh: true },
+        defaults: { ease: 'sine.inOut' },
+        // One continuous timeline retraces on upward scroll; no one-shot resets.
+        scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -85%', scrub: 1.6, invalidateOnRefresh: true },
       });
       // Stagger the surfaces so three distinct bands sweep through the viewport.
       ['tan', 'rose', 'cream'].forEach((color, index) => {
         colorReveal.fromTo(select(`.journey-color-disc--${color}`), { scale: .018 }, {
           scale: 1, duration: 1,
-        }, index * .16);
+        }, index * .22);
       });
       gsap.fromTo(select('.journey-portal-art'), { rotation: -65, scale: .72 }, {
         rotation: 35, scale: 1.08, ease: 'none',
-        scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -40%', scrub: 1.2 },
+        scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -110%', scrub: 1.6 },
       });
       // Animate the normalized SVG attribute, avoiding CSS pixel rounding.
       gsap.fromTo(select('[data-route-reveal]'), { attr: { 'stroke-dashoffset': 1 } }, {
@@ -96,10 +123,10 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
       </svg>
       <div className="journey-portal"><div className="journey-portal-art"><Orbit/></div></div>
       <div className="journey-asset journey-asset--spark" data-journey-drift=".7"><Spark/></div>
-      <div className="journey-asset journey-asset--plane" data-journey-drift="1.5"><Plane/></div>
-      <div className="journey-asset journey-asset--flower" data-journey-drift="1.1"><Spark/></div>
+      <div className="journey-asset journey-asset--quill" data-journey-drift="1.5"><FeatherPen/></div>
+      <div className="journey-asset journey-asset--ink" data-journey-drift="1.1"><InkBottle/></div>
       <div className="journey-asset journey-asset--orbit" data-journey-drift=".65"><Orbit label="CREATE · CONNECT · EXPLORE"/></div>
-      <div className="journey-asset journey-asset--code" data-journey-drift="1.3"><Brackets/></div>
+      <div className="journey-asset journey-asset--letter" data-journey-drift="1.3"><SealedLetter/></div>
       <div className="journey-asset journey-asset--send" data-journey-drift="1.8"><Plane/></div>
       <i className="journey-route-dot journey-route-dot--one"/><i className="journey-route-dot journey-route-dot--two"/>
     </div>
