@@ -51,9 +51,15 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const select = gsap.utils.selector(element);
-      gsap.fromTo(select('.journey-color-disc'), { scale: .018 }, {
-        scale: 1, ease: 'power2.inOut',
+      const colorReveal = gsap.timeline({
+        defaults: { ease: 'power2.inOut' },
         scrollTrigger: { trigger: events, start: 'top bottom', end: 'top 12%', scrub: 1, invalidateOnRefresh: true },
+      });
+      // Stagger the surfaces so three distinct bands sweep through the viewport.
+      ['tan', 'rose', 'cream'].forEach((color, index) => {
+        colorReveal.fromTo(select(`.journey-color-disc--${color}`), { scale: .018 }, {
+          scale: 1, duration: 1,
+        }, index * .16);
       });
       gsap.fromTo(select('.journey-portal-art'), { rotation: -65, scale: .72 }, {
         rotation: 35, scale: 1.08, ease: 'none',
@@ -78,7 +84,11 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
 
   return <div className="chapter-journey" ref={root}>
     <div className="journey-backdrop" aria-hidden="true">
-      <div className="journey-color-anchor"><div className="journey-color-disc"/></div>
+      <div className="journey-color-anchor">
+        <div className="journey-color-disc journey-color-disc--tan"/>
+        <div className="journey-color-disc journey-color-disc--rose"/>
+        <div className="journey-color-disc journey-color-disc--cream"/>
+      </div>
       <svg className="journey-route" viewBox="0 0 1200 2400" preserveAspectRatio="none" fill="none">
         <defs><mask id={maskId}><path data-route-reveal d={route} pathLength="1" stroke="white" strokeWidth="14" strokeDasharray="1"/></mask></defs>
         <path d={route} className="journey-route-ghost"/>

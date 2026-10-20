@@ -10,7 +10,11 @@
 .chapter-journey #events > div { background-color: transparent; }
 .journey-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: #64262a; }
 .journey-color-anchor { position: absolute; top: var(--journey-portal-y); left: 50%; width: 0; height: 0; }
-.journey-color-disc { position: absolute; width: var(--journey-diameter); aspect-ratio: 1; left: calc(var(--journey-diameter) / -2); top: calc(var(--journey-diameter) / -2); background: #e6d6ce; border-radius: 50%; transform: scale(.018); }
+.journey-color-disc { position: absolute; width: var(--journey-diameter); aspect-ratio: 1; left: calc(var(--journey-diameter) / -2); top: calc(var(--journey-diameter) / -2); border-radius: 50%; transform: scale(.018); }
+/* Postcard stock, a tint of the burgundy ink, then the cream stamp paper. */
+.journey-color-disc--tan { background: radial-gradient(circle, #c2a88f 0%, #b49880 75%); }
+.journey-color-disc--rose { background: radial-gradient(circle, #d9bfb8 0%, #c3a89f 75%); }
+.journey-color-disc--cream { background: radial-gradient(circle, #fff9e9 0%, #f2e8cf 75%); }
 .journey-route { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .journey-route-ghost,.journey-route-ink { vector-effect: non-scaling-stroke; stroke: currentColor; stroke-width: 1.35; stroke-dasharray: 2.5 7; stroke-linecap: round; }
 .journey-route-ghost { opacity: .075; }
@@ -43,5 +47,5 @@
 }
 @media(prefers-reduced-motion:reduce) {
   .journey-color-anchor { display: none; }
-  .chapter-journey #events { background: #e6d6ce; }
+  .chapter-journey #events { background: #f2e8cf; }
 }
