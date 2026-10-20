@@ -1,4 +1,3 @@
-import { useReducedMotion } from '../lib/useReducedMotion';
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import loaderMarkup from "../assets/Loader.svg?raw";
@@ -38,7 +37,7 @@ const HEART_D =
   "M 0,3 C -1.2,0.6 -5,-1.4 -5,-4 C -5,-6 -3.4,-7 -1.9,-7 C -0.8,-7 0,-6.4 0,-5.4 C 0,-6.4 0.8,-7 1.9,-7 C 3.4,-7 5,-6 5,-4 C 5,-1.4 1.2,0.6 0,3";
 const HEART_GAP = 10;
 
-function AnimatedPostcard() {
+export default function PostcardLoader() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -163,9 +162,4 @@ function AnimatedPostcard() {
       dangerouslySetInnerHTML={{ __html: loaderMarkup }}
     />
   );
-}
-
-export default function PostcardLoader(){
-  const reduced=useReducedMotion();
-  return reduced?<div className="fullscreen-animation"><div className="still-postcard"><span className="still-stamp" aria-hidden="true">acm-w<br/>VIT</span><div><p>To the curious ones,</p><h2>welcome to<br/>acm-w ♡</h2><span>There’s a place for you here.</span></div></div></div>:<AnimatedPostcard/>;
 }

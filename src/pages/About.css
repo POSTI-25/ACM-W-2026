@@ -1,19 +1,213 @@
-.about-story { display:grid; grid-template-columns:1.25fr 1fr; align-items:center; gap:clamp(2.5rem,7vw,7rem); margin-block:4rem 6rem; }
-.about-photo { margin:0; position:relative; rotate:-3deg; }
-.about-photo img { display:block; width:100%; height:auto; filter:drop-shadow(0 12px 14px #38211a12); }
-.about-photo figcaption { font: .75rem/1.5 Quicksand,sans-serif; text-align:center; letter-spacing:.04em; margin-top:.6rem; }
-.about-copy { position:relative; max-width:29rem; }
-.about-copy h3 { font-size:clamp(2rem,3.6vw,3.4rem); line-height:1.1; margin:1rem 0 1.5rem; }
-.about-copy > p:not(.eyebrow) { color:var(--body-ink); font:400 1rem/1.85 Quicksand,sans-serif; }
-.about-copy .text-link { margin-top:1.5rem; }
-.about-story--reverse { grid-template-columns:1fr 1.25fr; }
-.about-story--reverse .about-photo { grid-column:2; grid-row:1; rotate:3deg; }
-.about-story--reverse .about-copy { grid-column:1; grid-row:1; }
-.postmark { display:grid; place-items:center; width:6rem; aspect-ratio:1; border:1px solid currentColor; border-radius:50%; font:.6rem/1.5 Quicksand,sans-serif; text-align:center; letter-spacing:.1em; rotate:15deg; margin-bottom:2rem; opacity:.65; outline:1px dashed currentColor; outline-offset:-6px; }
-@media(max-width:48rem) {
-  .about-story,.about-story--reverse { grid-template-columns:1fr; gap:2rem; margin-block:3rem 4rem; }
-  .about-story--reverse .about-photo,.about-story--reverse .about-copy { grid-column:auto; grid-row:auto; }
-  .about-photo { width:calc(100% - 1rem); margin-inline:auto; }
-  .about-copy { max-width:none; }
-  .postmark { display:none; }
+.about,
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
+  background-color: #fff9e9;
+}
+
+#root {
+  max-width: none;
+  border: none;
+  text-align: left;
+}
+
+.about {
+  position: relative;
+  background-color: #fff9e9;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+
+.about_cards {
+  display: flex;
+  flex-direction: column;
+  /* Pulls the whole pair up toward the hero above. */
+  margin-top: clamp(-6rem, -5vw, -2.25rem);
+}
+
+/* Sections sit in normal document flow, sized by their card, so the whole
+   page scrolls on the main scrollbar — no inner scroll container. */
+.about_section {
+  position: relative;
+  padding-top: 0;
+}
+
+/* Second card rides over the bottom of the first. Later in the DOM,
+   so it paints on top without needing a z-index. */
+.about_section--top {
+  margin-top: clamp(-12rem, -10vw, -4.5rem);
+  padding-bottom: clamp(3rem, 7vh, 3.75rem);
+}
+
+/* Wrapper is the containing block for both figure and overlay.
+   No filter/transform here so it doesn't create a stacking context —
+   the overlay's z-index then escapes the figure's drop-shadow filter. */
+.about_card-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1440 / 1002;
+}
+
+.about_card-wrap--acmvit {
+  aspect-ratio: 1440 / 1011;
+}
+
+/* Figure fills the wrapper; filter here creates a stacking context but it no
+   longer traps the overlay (which is now a sibling, not a child). */
+.about_polaroid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  filter: drop-shadow(0 14px 32px rgba(60, 34, 24, 0.16));
+}
+
+.about_polaroid-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: brightness(0.82);
+}
+
+/* Overlay sits as a sibling of the figure inside the wrapper, so the
+   figure's filter stacking context doesn't trap it. */
+.about_overlay {
+  position: absolute;
+  inset: 21.5% 10.5% 20.5% 10.5%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  font-style: normal;
+  pointer-events: none;
+  transform-origin: center center;
+  overflow: hidden;
+  width: auto;
+}
+
+.about_overlay--acmw {
+  transform: rotate(-7.2deg);
+}
+
+.about_overlay--acmvit {
+  transform: rotate(7.2deg);
+}
+
+.about_cardTitle {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  font-family: 'Kovanov', 'Times New Roman', Georgia, serif;
+  font-size: clamp(1.625rem, 3vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  transform-origin: center center;
+}
+
+.about_cardBody {
+  width: 100%;
+  margin: auto 0 0;
+  font-family: 'Kovanov', 'Times New Roman', Georgia, serif;
+  font-size: clamp(0.6875rem, 1.08vw, 1rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 9;
+  line-clamp: 9;
+}
+
+.about_cardBody p {
+  margin: 0;
+}
+
+.about_cardBody p+p {
+  margin-top: 0.65em;
+}
+
+@media (max-width: 48rem) {
+  .about {
+    min-height: auto;
+  }
+
+  .about_cards {
+    margin-top: clamp(-3rem, -6vw, -1rem);
+  }
+
+  .about_section {
+    padding-top: 0;
+  }
+
+  .about_section--top {
+    margin-top: clamp(-6rem, -12vw, -2rem);
+    padding-bottom: clamp(1.25rem, 3vh, 1.75rem);
+  }
+
+  .about_card-wrap {
+    aspect-ratio: 4 / 3;
+  }
+
+  .about_card-wrap--acmvit {
+    aspect-ratio: 4 / 3;
+  }
+
+  .about_overlay {
+    inset: 22.5% 10% 20% 10%;
+  }
+
+  .about_cardTitle {
+    font-size: clamp(1.375rem, 5.5vw, 1.875rem);
+  }
+
+  .about_cardBody {
+    font-size: 0.625rem;
+    line-height: 1.26;
+  }
+}
+
+@media (max-width: 30rem) {
+  .about_cards {
+    margin-top: clamp(-2.25rem, -6vw, -0.75rem);
+  }
+
+  .about_section {
+    padding-top: 0;
+  }
+
+  .about_section--top {
+    margin-top: clamp(-4.5rem, -11vw, -1.5rem);
+    padding-bottom: clamp(0.75rem, 2vh, 1.25rem);
+  }
+
+  .about_card-wrap,
+  .about_card-wrap--acmvit {
+    aspect-ratio: 3 / 2.5;
+  }
+
+  .about_overlay {
+    inset: 21% 9% 18% 9%;
+  }
+
+  .about_cardTitle {
+    font-size: clamp(1.125rem, 5vw, 1.5rem);
+  }
+
+  .about_cardBody {
+    font-size: clamp(0.5rem, 2.2vw, 0.625rem);
+    line-height: 1.22;
+    -webkit-line-clamp: 7;
+    line-clamp: 7;
+  }
 }

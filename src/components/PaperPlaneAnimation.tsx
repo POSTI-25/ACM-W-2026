@@ -1,23 +1,127 @@
-import { useLayoutEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import planeImg from '../assets/plane.png';
-gsap.registerPlugin(MotionPathPlugin,ScrollTrigger);
-const path='M 30,120 C 180,180 240,10 420,65 S 740,140 940,35';
+import { useRef, useLayoutEffect } from "react";
+import gsap from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import planeImg from "../assets/plane.png";
+
+gsap.registerPlugin(MotionPathPlugin, ScrollTrigger);
+
+const FLIGHT_PATH =
+  // First bump
+  "M 60,280 " +
+  "C 150,300 230,220 330,260 " +
+  // Graceful drop down
+  "C 410,295 430,420 380,550 " +
+  // Deep valley — prominent dip, centered
+  "C 370,740 550,890 800,790 " +
+  // High peak — prominent rise
+  "C 930,720 1030,490 1210,540 " +
+  // Dip back down and exit
+  "C 1310,570 1360,660 1430,640 " +
+  // Clean exit off right edge
+  "C 1470,620 1510,615 1560,620";
+
 export default function PaperPlaneAnimation() {
-  const root=useRef<SVGSVGElement>(null);
-  useLayoutEffect(()=>{
-    if(!root.current)return;
-    const media=gsap.matchMedia();
-    media.add('(prefers-reduced-motion: no-preference)',()=>{
-      gsap.fromTo('.journey-plane',{opacity:0},{opacity:1,duration:.15,scrollTrigger:{trigger:root.current,start:'top 85%',once:true}});
-      gsap.fromTo('.journey-plane',{motionPath:{path,start:0,end:0}},{motionPath:{path,autoRotate:true},duration:1.8,ease:'power2.inOut',scrollTrigger:{trigger:root.current,start:'top 85%',once:true}});
-    },root);
-    return()=>media.revert();
-  },[]);
-  return <svg ref={root} className="plane-trail" viewBox="0 0 1000 180" aria-hidden="true">
-    <path d={path} fill="none" stroke="#580a0a" strokeWidth="1" strokeDasharray="5 8" opacity=".5"/>
-    <g className="journey-plane" transform="translate(940 35)"><image href={planeImg} x="-22" y="-18" width="44" height="36"/></g>
-  </svg>;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const maskPathRef = useRef<SVGPathElement>(null);
+  const planeGroupRef = useRef<SVGGElement>(null);
+
+  useLayoutEffect(() => {
+    const svg = svgRef.current;
+    const maskPath = maskPathRef.current;
+    const planeGroup = planeGroupRef.current;
+    if (!svg || !maskPath || !planeGroup) return;
+
+    const pathLen = maskPath.getTotalLength();
+
+    const ctx = gsap.context(() => {
+      gsap.set(maskPath, {
+        strokeDasharray: pathLen,
+        strokeDashoffset: pathLen,
+      });
+
+      gsap.set(planeGroup, { x: 60, y: 280 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: svg.closest("[data-award-card]") || svg,
+          start: "top 80%",
+          once: true,
+        },
+      });
+
+      tl.to(
+        maskPath,
+        { strokeDashoffset: 0, duration: 5.5, ease: "power1.inOut" },
+        0
+      );
+
+      tl.to(
+        planeGroup,
+        {
+          motionPath: {
+            path: FLIGHT_PATH,
+            autoRotate: true,
+            alignOrigin: [0.5, 0.5],
+          },
+          duration: 5.5,
+          ease: "power1.inOut",
+        },
+        0
+      );
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <svg
+      ref={svgRef}
+      viewBox="0 0 1440 1100"
+      preserveAspectRatio="xMidYMid slice"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        overflow: "visible",
+        pointerEvents: "none",
+        zIndex: 50,
+      }}
+    >
+      <defs>
+        <mask id="plane-trail-mask">
+          <path
+            ref={maskPathRef}
+            d={FLIGHT_PATH}
+            fill="none"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+          />
+        </mask>
+      </defs>
+
+      <path
+        d={FLIGHT_PATH}
+        fill="none"
+        stroke="#1a1a1a"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeDasharray="14 11"
+        mask="url(#plane-trail-mask)"
+      />
+
+      <g ref={planeGroupRef}>
+        <image
+          href={planeImg}
+          x="-23"
+          y="-23"
+          width="46"
+          height="46"
+        />
+      </g>
+    </svg>
+  );
 }

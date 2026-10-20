@@ -17,9 +17,7 @@
     "cf:contact:dev": "wrangler --config=wrangler.contact.jsonc dev",
     "cf:contact:deploy": "wrangler --config=wrangler.contact.jsonc deploy",
     "cf:site:deploy": "npm run build && wrangler deploy",
-    "cf:deploy": "npm run cf:site:deploy && npm run cf:contact:deploy",
-    "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "media": "node scripts/optimize-media.mjs && node scripts/prepare-globe.mjs"
+    "cf:deploy": "npm run cf:site:deploy && npm run cf:contact:deploy"
   },
   "dependencies": {
     "@types/three": "^0.184.1",
@@ -44,13 +42,10 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "sharp": "^0.35.5",
     "tailwindcss": "^4.3.0",
-    "topojson-client": "^3.1.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
-    "world-atlas": "^2.0.2",
     "wrangler": "^4.124.0"
   }
 }
