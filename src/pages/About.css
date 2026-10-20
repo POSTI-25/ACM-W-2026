@@ -41,9 +41,7 @@ body,
   padding-bottom: clamp(3rem, 7vh, 3.75rem);
 }
 
-/* Wrapper is the containing block for both figure and overlay.
-   No filter/transform here so it doesn't create a stacking context —
-   the overlay's z-index then escapes the figure's drop-shadow filter. */
+/* Move the complete card as one unit, keeping the photo and its overlay aligned. */
 .about_card-wrap {
   position: relative;
   width: 100%;
