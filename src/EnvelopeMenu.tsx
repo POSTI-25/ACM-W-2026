@@ -20,7 +20,7 @@ export default function EnvelopeMenu() {
       if (root.current && !root.current.contains(event.target as Node)) setOpen(false);
     };
     const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setOpen(false); toggle.current?.focus(); }
+      if (event.key === 'Escape' && root.current?.querySelector('nav')?.getAttribute('aria-hidden') === 'false') { setOpen(false); toggle.current?.focus(); }
     };
     document.addEventListener('pointerdown', close);
     document.addEventListener('keydown', escape);

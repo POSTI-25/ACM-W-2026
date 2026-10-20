@@ -1,4 +1,4 @@
-import cardBg from "../assets/teams/team-postcard.png";
+import cardBg from "../assets/optimized/teams-team-postcard.webp";
 
 
 type ProfileCardProps = {
@@ -27,7 +27,7 @@ export default function ProfileCard({
   const isValidLink = (href?: string) => Boolean(href && href !== "#");
   return (
     <article
-      className="team-card relative flex aspect-[21/11.5] w-[min(92vw,26.25rem)] flex-col justify-center border border-[#5d0f14]/60 bg-cover bg-center p-[clamp(0.75rem,2.5vw,1rem)] shadow-md transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/20 hover:z-10 sm:w-[min(42vw,26.25rem)]"
+      className="team-card postcard-profile relative flex aspect-[21/11.5] w-[min(92vw,26.25rem)] flex-col justify-center border border-[#5d0f14]/60 bg-cover bg-center p-[clamp(0.75rem,2.5vw,1rem)] shadow-md transition-transform duration-300 ease-out hover:-translate-y-1 hover:z-10 sm:w-[min(42vw,26.25rem)]"
       style={{ backgroundImage: `url(${cardBg})` }}
     >
       <div className="relative flex h-full w-full items-stretch">

@@ -18,6 +18,6 @@ export default function PaperPlaneAnimation() {
   },[]);
   return <svg ref={root} className="plane-trail" viewBox="0 0 1000 180" aria-hidden="true">
     <path d={path} fill="none" stroke="#580a0a" strokeWidth="1" strokeDasharray="5 8" opacity=".5"/>
-    <g className="journey-plane"><image href={planeImg} x="-22" y="-18" width="44" height="36"/></g>
+    <g className="journey-plane" transform="translate(940 35)"><image href={planeImg} x="-22" y="-18" width="44" height="36"/></g>
   </svg>;
 }

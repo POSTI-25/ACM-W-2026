@@ -1,30 +1,29 @@
-import { useEffect, useMemo, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useMemo } from "react";
+import { useReveal } from "../lib/useReveal";
 
-import cherukuri from "../assets/teams/cherukuri.png";
-import lavanya from "../assets/teams/lavanya.png";
-import mahendra from "../assets/teams/mahendra.png";
-import navdha from "../assets/teams/navdha.png";
-import adheesh from "../assets/teams/adheesh.png";
-import aarjav from "../assets/teams/aarjav.png";
-import prakhar from "../assets/teams/prakhar.png";
-import rohit from "../assets/teams/rohit.png";
-import drashti from "../assets/teams/drashti.png";
-import shaurya from "../assets/teams/shaurya.png";
-import ishaan from "../assets/teams/ishaan.png";
-import rishit from "../assets/teams/rishit.png";
-import vansh from "../assets/teams/vansh.png";
-import nishtha from "../assets/teams/nishtha.png";
-import krishika from "../assets/teams/krishika.png";
-import harshit from "../assets/teams/harshit.png";
-import googleScholarIcon from "../assets/teams/Google-Scholar.png";
-import githubIcon from "../assets/teams/github.png";
-import linkedinIcon from "../assets/teams/linkedin.png";
+import cherukuri from "../assets/optimized/teams-cherukuri.webp";
+import lavanya from "../assets/optimized/teams-lavanya.webp";
+import mahendra from "../assets/optimized/teams-mahendra.webp";
+import navdha from "../assets/optimized/teams-navdha.webp";
+import adheesh from "../assets/optimized/teams-adheesh.webp";
+import aarjav from "../assets/optimized/teams-aarjav.webp";
+import prakhar from "../assets/optimized/teams-prakhar.webp";
+import rohit from "../assets/optimized/teams-rohit.webp";
+import drashti from "../assets/optimized/teams-drashti.webp";
+import shaurya from "../assets/optimized/teams-shaurya.webp";
+import ishaan from "../assets/optimized/teams-ishaan.webp";
+import rishit from "../assets/optimized/teams-rishit.webp";
+import vansh from "../assets/optimized/teams-vansh.webp";
+import nishtha from "../assets/optimized/teams-nishtha.webp";
+import krishika from "../assets/optimized/teams-krishika.webp";
+import harshit from "../assets/optimized/teams-harshit.webp";
+import googleScholarIcon from "../assets/optimized/teams-Google-Scholar.webp";
+import githubIcon from "../assets/optimized/teams-github.webp";
+import linkedinIcon from "../assets/optimized/teams-linkedin.webp";
 
 import ProfileCard from "../components/ProfileCard";
 
-gsap.registerPlugin(ScrollTrigger);
+
 
 const imageMap = {
   cherukuri,
@@ -322,40 +321,18 @@ const teamData: TeamMember[] = [
 ];
 
 export default function TeamPage() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useReveal();
 
   const rows = useMemo(() => {
     const rowSet = new Set(teamData.map((member) => member.row));
     return Array.from(rowSet).sort((a, b) => a - b);
   }, []);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray<HTMLElement>(".team-card");
-      gsap.from(cards, {
-        opacity: 0,
-        y: 50,
-        duration: 0.8,
-        ease: "power3.out",
-        stagger: 0.1,
-        immediateRender: false,
-        clearProps: "transform",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 75%",
-          toggleActions: "play none none none",
-          once: true,
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="relative w-full overflow-visible bg-[#B49880] py-16 text-[#580A0A] sm:py-20"
+      className="team-section relative w-full overflow-visible bg-[#B49880] py-16 text-[#580A0A] sm:py-20"
     >
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-25 mix-blend-multiply"
@@ -367,6 +344,7 @@ export default function TeamPage() {
       />
 
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-6">
+        <p className="eyebrow">06 / THE PEOPLE BEHIND IT ALL</p>
         <h2
           className="text-center text-[clamp(2rem,5vw,2.5rem)] font-bold tracking-[0.08em]"
           style={{
@@ -387,6 +365,7 @@ export default function TeamPage() {
             return (
               <div
                 key={row}
+                data-reveal
                 id={row === 1 ? "faculty-coordinator" : undefined}
                 className="flex flex-col items-center gap-6 md:flex-row md:justify-center md:gap-8"
               >
