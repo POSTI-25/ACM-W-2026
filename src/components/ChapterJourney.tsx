@@ -78,16 +78,6 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
         attr: { 'stroke-dashoffset': 0 }, ease: 'none',
         scrollTrigger: { trigger: element, start: 'top 70%', end: 'bottom 60%', scrub: .7 },
       });
-      // Bound drift to the title surround; solid artwork never reaches event copy.
-      element.querySelectorAll<HTMLElement>('[data-stationery]').forEach(asset => {
-        const quill = asset.dataset.stationery === 'quill';
-        const track = asset.querySelector('[data-stationery-scroll]');
-        if (!track) return;
-        gsap.fromTo(track, { y: () => Math.min(24, innerWidth * .035), rotation: quill ? -5 : 3 }, {
-          y: () => -Math.min(24, innerWidth * .035), rotation: quill ? 6 : -3, ease: 'none',
-          scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -30%', scrub: 1.5, invalidateOnRefresh: true },
-        });
-      });
       element.querySelectorAll<HTMLElement>('[data-journey-drift]').forEach((asset, index) => {
         const depth = Number(asset.dataset.journeyDrift);
         gsap.fromTo(asset, { y: () => innerHeight * .16 * depth, rotation: index % 2 ? 12 : -14 }, {
