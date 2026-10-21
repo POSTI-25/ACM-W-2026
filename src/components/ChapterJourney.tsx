@@ -2,6 +2,7 @@ import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import JourneyStationery from './JourneyStationery';
+import EventsQuill from './EventsQuill';
 import './ChapterJourney.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -104,8 +105,8 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
       </svg>
       <div className="journey-portal"><div className="journey-portal-art"><Orbit/></div></div>
       <div className="journey-asset journey-asset--spark" data-journey-drift=".7"><Spark/></div>
-      <JourneyStationery kind="quill"/>
-      <JourneyStationery kind="ink"/>
+      <EventsQuill/>
+      <JourneyStationery/>
       <div className="journey-asset journey-asset--orbit" data-journey-drift=".65"><Orbit label="CREATE · CONNECT · EXPLORE"/></div>
       <div className="journey-asset journey-asset--letter" data-journey-drift="1.3"><SealedLetter/></div>
       <div className="journey-asset journey-asset--send" data-journey-drift="1.8"><Plane/></div>

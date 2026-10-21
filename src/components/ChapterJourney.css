@@ -30,8 +30,7 @@
 .journey-asset { position: absolute; aspect-ratio: 1; opacity: .2; }
 .journey-asset--spark { top: 5%; left: 7%; width: clamp(70px, 10vw, 150px); opacity: .28; }
 /* Silhouettes frame the centered title, ending before the event descriptions. */
-.journey-asset--quill,.journey-asset--ink { opacity: .94; }
-.journey-asset--quill { top: calc(var(--journey-events-y) - 194px); right: 2%; width: clamp(220px, 21vw, 290px); aspect-ratio: 320 / 560; }
+.journey-asset--ink { opacity: .94; }
 .journey-asset--ink { top: calc(var(--journey-events-y) + 32px); left: 3%; width: clamp(220px, 22vw, 300px); aspect-ratio: 380 / 240; }
 .journey-asset--orbit { top: 60%; right: -10%; width: clamp(260px, 40vw, 620px); opacity: .15; }
 .journey-asset--letter { top: 76%; left: 3%; width: clamp(160px, 23vw, 340px); opacity: .19; }
@@ -45,7 +44,6 @@
 .chapter-trail-seal svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1; opacity: .55; }
 @media(max-width:48rem) {
   .journey-portal { width: 112vw; opacity: .19; }
-  .journey-asset--quill { top: calc(var(--journey-events-y) + 168px); right: 1%; width: clamp(140px, 26vw, 190px); }
   .journey-asset--ink { top: calc(var(--journey-events-y) + 150px); left: 4%; width: clamp(125px, 32vw, 170px); }
   .journey-asset--orbit { right: -35%; opacity: .12; }
   .journey-asset--letter { left: -19%; opacity: .14; }
