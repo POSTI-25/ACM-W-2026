@@ -1,10 +1,9 @@
 import * as THREE from 'three';
 import { sampleAwardFlight, type FlightPose } from './awardFlightMotion';
+import { createAwardInkTrail } from './awardFlightTrail';
 
 export type AwardFlightController = { setActive(active: boolean): void; dispose(): void };
 const TAU = Math.PI * 2;
-const HISTORY = 64;
-const TRAIL_SEGMENTS = 30;
 
 /** Small folded mesh: four paper panels, a keel, and warm cut-paper crease lines. */
 function makePlane() {
@@ -59,26 +58,9 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
   const aircraft = makePlane();
   scene.add(aircraft.plane);
 
-  const trailPositions = new Float32Array(TRAIL_SEGMENTS * 2 * 3);
-  const trailAlpha = new Float32Array(TRAIL_SEGMENTS * 2);
-  for (let i = 0; i < TRAIL_SEGMENTS; i++) {
-    trailAlpha[i * 2] = trailAlpha[i * 2 + 1] = .38 * Math.pow(1 - i / TRAIL_SEGMENTS, 1.6);
-  }
-  const trailGeometry = new THREE.BufferGeometry();
-  const trailAttribute = new THREE.BufferAttribute(trailPositions, 3).setUsage(THREE.DynamicDrawUsage);
-  trailGeometry.setAttribute('position', trailAttribute);
-  trailGeometry.setAttribute('aAlpha', new THREE.BufferAttribute(trailAlpha, 1));
-  const trailMaterial = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false,
-    vertexShader: 'attribute float aAlpha; varying float vAlpha; void main(){ vAlpha=aAlpha; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-    fragmentShader: 'varying float vAlpha; void main(){ gl_FragColor=vec4(0.13,0.09,0.065,vAlpha); }',
-  });
-  const trail = new THREE.LineSegments(trailGeometry, trailMaterial);
-  trail.frustumCulled = false;
-  scene.add(trail);
-  const history = Array.from({ length: HISTORY }, () => new THREE.Vector3());
-  let historyIndex = 0;
-  let hasHistory = false;
+  const trail = createAwardInkTrail();
+  scene.add(trail.mesh);
+  const tail = new THREE.Vector3();
 
   let width = 1, height = 1, distance = 1000;
   let frame: number | undefined;
@@ -115,7 +97,7 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
     const maskImage = `url("data:image/svg+xml,${encodeURIComponent(mask)}")`;
     host.style.maskImage = maskImage;
     host.style.setProperty('-webkit-mask-image', maskImage);
-    hasHistory = false;
+    trail.resize(width, height);
   };
 
   const render = (dt: number) => {
@@ -142,24 +124,9 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
     camera.lookAt(cameraAim);
     camera.updateMatrixWorld();
 
-    if (!hasHistory) {
-      history.forEach(point => point.copy(aircraft.plane.position));
-      hasHistory = true;
-    }
-    historyIndex = (historyIndex + 1) % HISTORY;
-    history[historyIndex].copy(aircraft.plane.position);
-    for (let i = 0; i < TRAIL_SEGMENTS; i++) {
-      const recent = history[(historyIndex - i * 2 + HISTORY) % HISTORY];
-      const older = history[(historyIndex - i * 2 - 1 + HISTORY) % HISTORY];
-      const offset = i * 6;
-      trailPositions[offset] = recent.x;
-      trailPositions[offset + 1] = recent.y;
-      trailPositions[offset + 2] = recent.z;
-      trailPositions[offset + 3] = older.x;
-      trailPositions[offset + 4] = older.y;
-      trailPositions[offset + 5] = older.z;
-    }
-    trailAttribute.needsUpdate = true;
+    tail.set(-1.15, 0, -.05).multiplyScalar(aircraft.plane.scale.x)
+      .applyQuaternion(aircraft.plane.quaternion).add(aircraft.plane.position);
+    trail.update(tail, elapsed);
     renderer.render(scene, camera);
     initialized = true;
   };
@@ -210,8 +177,7 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
       canvas.removeEventListener('webglcontextlost', onLost);
       canvas.removeEventListener('webglcontextrestored', onRestored);
       aircraft.dispose();
-      trailGeometry.dispose();
-      trailMaterial.dispose();
+      trail.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       canvas.remove();

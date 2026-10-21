@@ -42,3 +42,39 @@ test('straightaway bursts have a measurable speed change without stopping', () =
   assert.ok(Math.min(...speeds) > 0);
   assert.ok(Math.max(...speeds) / Math.min(...speeds) > 2);
 });
+
+test('the ink trail fades by elapsed time and keeps stationary buffers finite', async () => {
+  const THREE = await import('three');
+  const { createAwardInkTrail } = await import('../src/components/awardFlightTrail.ts');
+  const trail = createAwardInkTrail();
+  const point = new THREE.Vector3(20, 30, 40);
+  trail.update(point, 0);
+  trail.update(point, 1);
+  const geometry = trail.mesh.geometry;
+  const ages = geometry.getAttribute('aFreshness').array;
+  near(ages[0], 1);
+  near(ages[4], 1 - 1 / 3.2);
+  trail.update(point, 4.3);
+  near(ages[4], 0);
+  for (const name of ['position', 'aPrevious', 'aNext', 'aFreshness']) {
+    assert.ok([...geometry.getAttribute(name).array].every(Number.isFinite));
+  }
+  trail.dispose();
+});
+
+test('the ink ribbon uses responsive pixel widths and resets cleanly on resize', async () => {
+  const THREE = await import('three');
+  const { createAwardInkTrail } = await import('../src/components/awardFlightTrail.ts');
+  const trail = createAwardInkTrail();
+  trail.resize(1280, 700);
+  near(trail.mesh.material.uniforms.uWidth.value, 5.5);
+  trail.resize(390, 600);
+  near(trail.mesh.material.uniforms.uWidth.value, 4.25);
+  near(trail.mesh.material.uniforms.uResolution.value.x, 390);
+  trail.update(new THREE.Vector3(100, 50, 10), 10);
+  const position = trail.mesh.geometry.getAttribute('position');
+  near(position.getX(0), 100);
+  near(position.getY(0), 50);
+  near(position.getZ(0), 10);
+  trail.dispose();
+});
