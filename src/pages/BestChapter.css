@@ -1,0 +1,67 @@
+.award-scene {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  padding-top: clamp(3rem, 8vh, 5rem);
+  padding-bottom: clamp(6rem, 16vh, 10rem);
+  overflow: clip;
+}
+.award-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: clamp(4rem, 12vh, 6.25rem) clamp(1rem, 4vw, 1.5rem);
+  background: #b49880;
+  box-shadow: 0 12px 28px rgb(88 10 10 / 5%);
+}
+.award-banner::before {
+  content: '';
+  position: absolute;
+  inset: 14px clamp(16px, 2vw, 32px);
+  border-top: 1px solid rgb(88 10 10 / 13%);
+  border-bottom: 1px solid rgb(88 10 10 / 13%);
+  pointer-events: none;
+}
+.award-banner h2 {
+  margin: 0;
+  color: #580a0a;
+  font-family: Kovanov, Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(2.8rem, 7vw, 6.5rem);
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  text-align: center;
+}
+.award-banner p {
+  margin: clamp(1rem, 3vh, 1.5rem) 0 0;
+  color: #580a0a;
+  font: 400 clamp(1.1rem, 2vw, 1.6rem) Kovanov, serif;
+  text-align: center;
+}
+.award-flight {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.award-flight-route, .award-flight-trail {
+  fill: none;
+  stroke: #332722;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: 4 8;
+}
+.award-flight-route { opacity: .10; }
+.award-flight-trail { opacity: .6; }
+.award-flight-plane {
+  opacity: 0;
+  transform-origin: 0 0;
+  transform-box: view-box;
+}
