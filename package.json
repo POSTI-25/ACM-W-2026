@@ -12,6 +12,7 @@
     "prebuild": "node scripts/fetch-blogs.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test:award-flight": "node --experimental-strip-types --test scripts/award-flight.test.mjs",
     "preview": "vite preview",
     "dev:cloudflare": "npm run build && wrangler dev",
     "cf:contact:dev": "wrangler --config=wrangler.contact.jsonc dev",
