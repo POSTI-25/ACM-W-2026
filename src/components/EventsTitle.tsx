@@ -51,7 +51,7 @@ export default function EventsTitle() {
     <h1 className="events-title" data-events-title>
       <span className="sr-only">EVENTS</span>
       <span className="events-title-word" aria-hidden="true">
-        <span className="events-title-static">EVE</span>
+        <span className="events-title-static">{'EVE'.split('').map((letter, index) => <span key={index}>{letter}</span>)}</span>
         {DIALS.map(({ letter, width }) => <span className="events-title-dial" data-dial key={letter} style={{ width }}>
           <span className="events-title-track" data-dial-track>
             {[0, 1, 2, 3].map(row => <span className="events-title-row" key={row}>

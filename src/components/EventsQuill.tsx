@@ -84,16 +84,20 @@ export default function EventsQuill() {
         const frame = journey.getBoundingClientRect();
         const title = heading.getBoundingClientRect();
         const width = frame.width;
-        const height = title.height + 370;
+        const height = title.height + 430;
         // Local SVG canvas bounds the ink repaint; geometry is independent of scroll.
         svg.style.top = `${title.top - frame.top - 100}px`;
         svg.style.height = `${height}px`;
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-        scale = compact ? Math.min(.21, width / 2300) : Math.min(.34, Math.max(.26, width / 4000));
+        scale = compact ? Math.min(.27, width / 1800) : Math.min(.44, Math.max(.34, width / 3100));
         const left = compact ? 22 : Math.max(32, Math.min(84, width * .055));
-        const right = compact ? Math.min(260, width * .42) : Math.max(200, Math.min(340, width * .245));
-        const y = 100 + title.height + (compact ? 115 : 125);
         const curl = compact ? 28 : 46;
+        const word = heading.querySelector('.events-title-word')!.getBoundingClientRect();
+        // Reserve the enlarged blade's full sweep beside the wider title.
+        const titleClearance = word.left - frame.left - scale * 335 - curl - 24;
+        const right = compact ? Math.min(260, width * .42) : Math.min(width * .245, 340, titleClearance);
+        // On stacked layouts the whole blade sits below the title, including idle lift.
+        const y = 100 + title.height + (compact ? Math.max(130, scale * 560 + 26) : 125);
         approach.setAttribute('d', `M${-width * .3 - 120},${y + 45} C${-width * .13},${y + 48} ${left - 50},${y - 22} ${left},${y}`);
         stroke.setAttribute('d', `M${left},${y} C${left + 55},${y - 12} ${right - 50},${y + 14} ${right},${y} C${right + curl},${y - 16} ${right + curl},${y + 18} ${right + 15},${y + 18} C${right - 8},${y + 18} ${right - 10},${y + 5} ${right + 7},${y + 6}`);
         entryPoints = samplePath(approach);
@@ -109,20 +113,20 @@ export default function EventsQuill() {
           .to(drift, { x: 2, y: -3, angle: .8, duration: 3.1 })
           .to(drift, { x: -1.8, y: 1.3, angle: -.65, duration: 3.7 })
           .to(drift, { x: 0, y: 0, angle: 0, duration: 3.4 });
-        gsap.timeline({
-          onUpdate: render,
-          scrollTrigger: {
-            trigger: events, start: 'top 95%', end: 'top 8%', scrub: 1.5,
-            invalidateOnRefresh: true,
-            onToggle: self => {
-              scrollActive = self.isActive;
-              pen.style.willChange = scrollActive || idleRunning ? 'transform' : 'auto';
-            },
-          },
-        })
+        const sequence = gsap.timeline({ paused: true, onUpdate: render })
           .to(playhead, { entry: 1, duration: .24, ease: 'sine.inOut' })
           .to(playhead, { ink: 1, duration: .64, ease: 'sine.inOut' })
           .to(playhead, { settle: 1, duration: .22, ease: 'sine.inOut' });
+        // Attach the completed sequence so breakpoint changes initialize at current scroll.
+        ScrollTrigger.create({
+          animation: sequence,
+          trigger: events, start: 'top 95%', end: 'top 8%', scrub: 1.5,
+          invalidateOnRefresh: true,
+          onToggle: self => {
+            scrollActive = self.isActive;
+            pen.style.willChange = scrollActive || idleRunning ? 'transform' : 'auto';
+          },
+        });
       }
       const visibility = new IntersectionObserver(entries => {
         inView = entries.some(entry => entry.isIntersecting);
