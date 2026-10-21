@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import neuralHack from "../assets/NeuralHack.png";
 import insipher from "../assets/Inspiher.svg";
 import C2C from "../assets/C2C.png";
+import EventsTitle from "../components/EventsTitle";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -192,9 +193,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-[#fff9e9] px-6 py-16 max-sm:px-4 max-sm:py-10">
       <div className="mx-auto w-full max-w-[min(92vw,87.5rem)]">
-        <h1 className="mb-16 text-center font-[Kovanov,Georgia,serif] text-[clamp(3.5rem,5vw,4rem)] font-bold text-[#5B0F0F] max-sm:mb-8">
-          EVENTS
-        </h1>
+        <EventsTitle/>
 
         <div className="flex flex-col gap-16 max-[56.25rem]:gap-12 max-sm:gap-9">
           {events.map((event, index) => {

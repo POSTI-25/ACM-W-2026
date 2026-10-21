@@ -1,0 +1,13 @@
+.events-intro { position: relative; padding-bottom: 4rem; }
+.events-title { --dial-row: 1.24em; margin: 0; color: #5b0f0f; font-family: Kovanov, Georgia, serif; font-size: clamp(3.75rem, 6vw, 4.5rem); font-weight: 700; line-height: 1.24; text-align: center; }
+.events-title-word { display: inline-flex; align-items: flex-start; vertical-align: top; }
+.events-title-static { display: block; height: var(--dial-row); }
+.events-title-dial { position: relative; display: block; height: var(--dial-row); overflow: hidden; overflow: clip; contain: paint; }
+.events-title-track { display: flex; flex-direction: column; height: calc(var(--dial-row) * 4); transform: translateY(-75%); }
+.events-title-row { position: relative; display: block; flex: 0 0 var(--dial-row); height: var(--dial-row); }
+.events-title-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; line-height: 1.24; }
+.events-title-face--modern { font-family: Quicksand, Arial, sans-serif; font-weight: 400; opacity: 0; transform: scaleX(.9); }
+.events-title-face--serif { font-family: Georgia, serif; font-weight: 400; font-style: italic; opacity: 0; }
+.events-title-face--ornate { font-family: Kovanov, Georgia, serif; font-weight: 700; opacity: 1; }
+@media (max-width: 56.25rem) { .events-intro { padding-bottom: 6.5rem; } }
+@media (max-width: 40rem) { .events-title { font-size: clamp(3.75rem, 12vw, 4.25rem); } }
