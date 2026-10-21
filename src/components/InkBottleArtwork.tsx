@@ -1,26 +1,44 @@
 import { useId } from 'react';
 import { INK_FLOW_REST } from './inkFlow';
 
-/** Original bottle silhouette with a live stream and transparent ripple details. */
+/** Rounded, cut-paper bottle; the spill keeps its original size and position. */
 export default function InkBottleArtwork() {
-  const maskId = useId().replace(/:/g, '');
+  const id = useId().replace(/:/g, '');
+  const maskId = `${id}-cuts`;
+  const flowMaskId = `${id}-flow`;
+  const grainId = `${id}-grain`;
   return <svg className="stationery-ink-svg" width="380" height="240" viewBox="0 0 380 240" fill="none" focusable="false">
     <defs>
+      <pattern id={grainId} patternUnits="userSpaceOnUse" width="64" height="64">
+        <rect width="64" height="64" fill="#201f1d"/>
+        <path d="M33.4 51.6l0.8 -0.2M49.0 45.1l0.6 -0.3M1.7 24.6l0.6 -0.2M32.1 20.3l0.7 0.4M25.7 63.9l0.2 0.3M56.0 9.7l0.6 0.0M61.1 13.4l0.5 0.3M40.9 19.8l0.2 0.4M30.3 63.8l0.2 0.2M52.1 58.9l0.2 -0.1M3.3 48.1l0.4 0.4M24.0 49.6l0.7 -0.2M35.6 61.3l0.5 -0.1M17.1 50.3l0.3 0.1M35.6 35.4l0.2 0.1M58.7 20.4l0.4 0.3M37.0 17.4l0.2 0.2M22.3 29.9l0.3 0.1M46.7 19.8l0.2 0.4M58.2 1.3l0.5 0.1M25.8 46.8l0.8 0.1M25.1 12.5l0.3 -0.3M7.1 13.6l0.7 0.0M51.5 58.9l0.7 -0.4M59.3 5.9l0.7 0.3M42.1 25.8l0.2 -0.3M40.7 15.5l0.5 -0.2M10.5 18.9l0.6 -0.0M25.1 31.1l0.5 0.0M28.5 61.9l0.6 -0.2M20.4 12.1l0.4 -0.4M47.6 36.3l0.4 0.3M21.0 37.0l0.8 0.0M39.2 23.5l0.8 0.2M19.4 22.8l0.5 0.0M33.5 12.3l0.5 0.2M49.0 28.8l0.4 0.0M34.3 30.4l0.2 -0.2M63.2 52.9l0.5 0.2M13.5 17.1l0.5 0.2M1.8 30.2l0.7 0.1M63.6 6.3l0.7 0.3M1.7 34.3l0.6 -0.2M41.6 54.4l0.7 -0.1M3.7 34.5l0.3 0.0M17.2 22.2l0.5 0.3M62.4 26.0l0.2 0.2M21.7 48.5l0.7 -0.4M46.8 18.2l0.4 -0.1M34.5 15.6l0.5 -0.2M8.0 16.0l0.6 -0.2M12.8 23.4l0.3 0.4M50.4 9.7l0.3 -0.1M33.8 24.9l0.5 0.2M9.9 35.8l0.3 0.0M20.3 51.4l0.7 0.4M26.1 39.5l0.3 0.2M49.8 27.3l0.4 0.2M48.0 51.2l0.3 -0.2M16.0 12.2l0.2 -0.3M31.5 27.6l0.7 -0.1M10.9 59.6l0.2 -0.1M48.9 20.6l0.8 0.2M19.7 55.3l0.7 0.0M9.2 6.7l0.7 0.3M41.8 49.5l0.7 -0.2M13.6 55.5l0.7 -0.1M17.3 5.0l0.4 0.3M13.0 20.2l0.2 0.1M3.8 43.2l0.5 -0.1M16.6 19.4l0.7 0.4M48.1 13.6l0.3 -0.1M56.1 60.3l0.3 0.1M24.3 29.2l0.3 0.2M50.1 60.1l0.5 -0.0M41.4 8.4l0.7 0.2M14.6 25.7l0.5 0.3M44.3 15.3l0.8 0.3M54.9 31.5l0.5 -0.1M62.6 30.8l0.8 -0.3M1.9 30.2l0.3 -0.2M2.3 8.0l0.4 -0.3M19.0 39.2l0.3 -0.2M24.2 16.8l0.5 0.2M2.0 34.3l0.5 0.3M45.1 17.6l0.6 0.3M60.9 49.1l0.2 -0.1M30.6 21.1l0.6 -0.0M62.6 0.5l0.7 -0.3M33.2 9.5l0.4 0.1M61.4 2.6l0.4 -0.3M47.6 9.2l0.3 0.2M3.0 56.7l0.3 0.4M6.8 6.2l0.5 -0.2M41.2 19.4l0.4 -0.4M5.7 0.2l0.4 0.3M34.4 20.7l0.4 0.2M55.7 6.0l0.6 -0.2M59.5 46.4l0.5 0.1M48.8 4.5l0.4 -0.4M9.9 59.4l0.5 -0.2M18.9 26.8l0.2 0.3M24.4 3.6l0.5 -0.1M48.8 16.9l0.3 0.0M25.9 8.3l0.6 0.3M53.2 42.1l0.5 0.2M13.5 6.3l0.3 0.0M13.3 27.9l0.7 0.1M12.7 7.8l0.2 -0.4M16.7 45.6l0.7 -0.1M2.9 35.8l0.8 -0.4M40.2 63.9l0.4 0.1M51.9 42.6l0.3 0.2M37.5 42.3l0.5 0.3M36.6 59.1l0.2 -0.4M8.8 32.5l0.6 0.3M0.5 0.5l0.4 0.1M25.5 17.9l0.3 0.2M38.8 61.0l0.4 -0.0M61.6 44.8l0.3 0.2M28.6 5.7l0.2 -0.0M19.9 16.6l0.6 -0.2M28.9 32.5l0.2 0.2M17.1 10.4l0.5 -0.2M2.1 7.3l0.2 -0.1M20.9 13.4l0.3 0.3M36.8 38.8l0.2 0.3M2.1 48.9l0.6 -0.1M21.5 34.6l0.5 0.3M3.6 5.7l0.6 -0.2M37.1 24.5l0.2 0.3M12.0 21.3l0.6 0.3M54.8 59.5l0.4 -0.2M29.4 53.0l0.6 0.1M45.2 13.8l0.5 -0.1M56.4 19.8l0.5 0.1M45.2 50.4l0.6 -0.3M61.8 2.4l0.6 -0.2M6.4 23.2l0.2 -0.2M61.9 52.0l0.4 -0.0M38.3 20.3l0.2 -0.0M54.1 61.5l0.5 0.2M26.8 50.3l0.7 0.3M12.4 33.6l0.2 0.1M30.3 37.8l0.5 -0.1M9.0 20.6l0.7 -0.2M61.8 53.7l0.3 -0.0M51.1 0.6l0.7 -0.1M43.2 0.6l0.6 -0.4M18.2 39.3l0.6 -0.1M16.5 23.4l0.3 -0.2M15.8 31.8l0.6 0.3M25.2 60.5l0.4 0.3M52.1 48.2l0.7 0.1M56.4 17.5l0.5 0.1M34.1 3.8l0.3 0.1M23.5 44.9l0.6 0.0M8.5 28.6l0.7 -0.1M5.7 49.2l0.4 -0.2M32.8 58.5l0.5 -0.2M0.6 27.0l0.3 0.4M56.5 62.6l0.7 -0.2M40.7 35.3l0.5 0.0M13.9 9.9l0.2 0.2M10.7 55.3l0.6 -0.2M57.3 5.9l0.3 0.2M23.7 58.1l0.5 -0.4M59.5 63.2l0.4 0.2M43.7 6.5l0.6 -0.0M44.4 0.3l0.4 -0.2M59.3 1.9l0.2 -0.1M52.3 12.4l0.6 0.2M38.1 24.7l0.6 -0.3M17.1 55.3l0.3 -0.2M8.7 34.2l0.8 -0.3M32.9 57.2l0.2 -0.0M19.2 35.2l0.8 0.3M21.3 12.9l0.5 0.4M15.5 17.4l0.4 0.4M19.0 12.4l0.4 0.0" stroke="#69645c" strokeWidth=".7" strokeLinecap="round" opacity=".36"/>
+        <path d="M3 12l4-1m18 5 5-2m14 29 5-1M12 48l3 2m36-46 4 1M20 34l4-1M57 28l3 2" stroke="#82786a" strokeWidth=".45" opacity=".2"/>
+      </pattern>
       <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="380" height="240">
         <rect width="380" height="240" fill="white"/>
-        <g stroke="black" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" fill="none">
-          <path d="M222 63 261 30q22-7 40 9l25 59q13 32-8 45l-53 23q-19 7-27-7M263 77l56 20M263 77l-40-14m40 14-6 84M303 40l23 58M206 111l19 43M45 201c42 13 155 13 222 3M80 184c26-11 64-4 88-1m-4 9c32 8 70 6 90-1"/>
-          <ellipse cx="178" cy="139" rx="19" ry="28" transform="rotate(-26 178 139)"/>
-          <path d="M180 113q17 1 24 23m-15-28q18 1 26 24"/>
+        <g transform="translate(178 139) scale(1.04) translate(-178 -139)" stroke="black" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" fill="none">
+          <path d="M255 45C234 43 218 63 219 85M225 107C236 117 239 131 239 149C241 168 255 175 274 170L317 165M245 54C259 67 262 88 261 112C260 139 269 158 260 170M317 41C341 50 352 83 355 118C356 139 345 157 328 164"/>
+          <ellipse cx="178" cy="139" rx="20" ry="29" transform="rotate(-26 178 139)"/>
+          <path d="M181 111q18 0 26 23m-15-28q18 0 27 24m-18-27q18 2 25 22"/>
         </g>
-        <ellipse data-ink-ripple cx="137" cy="188" rx="25" ry="4" fill="none" stroke="black" strokeWidth="1.8" opacity="0"/>
+        <path d="M45 201c42 13 155 13 222 3M80 184c26-11 64-4 88-1m-4 9c32 8 70 6 90-1" stroke="black" strokeWidth="2.2" strokeLinecap="round"/>
+        <ellipse data-ink-ripple cx="137" cy="188" rx="30" ry="4.8" fill="none" stroke="black" strokeWidth="2.4" opacity="0"/>
+        <ellipse data-ink-ripple cx="137" cy="188" rx="30" ry="4.8" fill="none" stroke="black" strokeWidth="1.8" opacity="0"/>
+      </mask>
+      <mask id={flowMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="380" height="240">
+        <rect width="380" height="240" fill="white"/>
+        <path data-ink-current d="M166 155C162 171 147 181 126 184" fill="none" stroke="black" strokeWidth="1.8" strokeLinecap="round" strokeDasharray="4 12" opacity=".8"/>
       </mask>
     </defs>
-    <path data-ink-stream fill="#201f1d" d={INK_FLOW_REST}/>
+    <path data-ink-stream fill="#201f1d" d={INK_FLOW_REST} mask={`url(#${flowMaskId})`}/>
     <path data-ink-drop fill="#201f1d" d="M151 161c-2 4-4 6-4 8a3 3 0 0 0 6 0c0-2-1-5-2-8Z" opacity="0"/>
     <g fill="#201f1d" mask={`url(#${maskId})`}>
-      <path d="M258 24q27-9 48 9l28 61q16 37-10 55l-57 25q-25 9-39-13l-23-45q-12-24 6-45Z"/>
-      <path d="m215 104-30 7q-20 1-28 19-8 20 5 33 10 11 26 2l39-15Z"/>
+      <g transform="translate(178 139) scale(1.04) translate(-178 -139)">
+        <g fill={`url(#${grainId})`}>
+          <path d="M224 77C225 55 242 38 267 37L310 34L319 37C341 39 355 60 360 84L364 121C363 148 347 166 325 170L272 177C250 180 231 166 227 148L219 121C214 104 216 89 224 77Z"/>
+          <path d="M227 103L187 108C168 108 155 120 155 136C154 153 165 169 181 168L237 151Z"/>
+        </g>
+      </g>
       <path d="M139 175c-19 8-58-5-66 10-16 5-54 5-57 17-6 17 78 20 115 21 62 3 161-1 181-10 18-9-14-17-44-19-25-15-55-11-75-8-31 3-40-3-54-11Z"/>
       <ellipse cx="291" cy="181" rx="31" ry="3"/>
       <ellipse cx="37" cy="182" rx="7" ry="3"/>

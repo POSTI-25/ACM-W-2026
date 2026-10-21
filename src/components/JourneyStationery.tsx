@@ -53,11 +53,18 @@ export default function JourneyStationery({ kind }: { kind: StationeryKind }) {
           .fromTo(select('[data-ink-drop]'), { x: 0, y: 0, opacity: 0 }, { opacity: .85, duration: .25 })
           .to(select('[data-ink-drop]'), { x: -12, y: 17, duration: .85, ease: 'power1.in' }, 0)
           .to(select('[data-ink-drop]'), { opacity: 0, duration: .3 }, .55));
-        loops.push(gsap.timeline({ paused: true, repeat: -1, repeatDelay: .4 })
-          .fromTo(select('[data-ink-ripple]'), { scaleX: .45, scaleY: .55, opacity: 0, svgOrigin: '137 188' },
-            { scaleX: 1.3, scaleY: 1.1, duration: 2.8, ease: 'sine.out' })
-          .to(select('[data-ink-ripple]'), { opacity: .65, duration: .55 }, 0)
-          .to(select('[data-ink-ripple]'), { opacity: 0, duration: 1.4 }, 1.4));
+        loops.push(gsap.fromTo(select('[data-ink-current]'), { attr: { 'stroke-dashoffset': 0 } }, {
+          attr: { 'stroke-dashoffset': -16 }, duration: 1.8, repeat: -1, ease: 'none', paused: true,
+        }));
+        stage.querySelectorAll<SVGEllipseElement>('[data-ink-ripple]').forEach((ripple, index) => {
+          const rippleLoop = gsap.timeline({ paused: true, repeat: -1 })
+            .fromTo(ripple, { scaleX: .35, scaleY: .6, opacity: 0, svgOrigin: '137 188' },
+              { scaleX: 1.6, scaleY: 1.25, duration: 3.2, ease: 'sine.out' })
+            .to(ripple, { opacity: .9, duration: .6 }, 0)
+            .to(ripple, { opacity: 0, duration: 1.6 }, 1.6);
+          rippleLoop.progress(index * .5).pause();
+          loops.push(rippleLoop);
+        });
       }
 
       let inView = false;
