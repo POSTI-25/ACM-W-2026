@@ -89,12 +89,12 @@ export default function EventsQuill() {
         svg.style.top = `${title.top - frame.top - 100}px`;
         svg.style.height = `${height}px`;
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-        scale = compact ? Math.min(.27, width / 1800) : Math.min(.44, Math.max(.34, width / 3100));
+        scale = 1.08 * (compact ? Math.min(.27, width / 1800) : Math.min(.44, Math.max(.34, width / 3100)));
         const left = compact ? 22 : Math.max(32, Math.min(84, width * .055));
         const curl = compact ? 28 : 46;
         const word = heading.querySelector('.events-title-word')!.getBoundingClientRect();
         // Reserve the enlarged blade's full sweep beside the wider title.
-        const titleClearance = word.left - frame.left - scale * 335 - curl - 24;
+        const titleClearance = word.left - frame.left - scale * 335 - curl - 8;
         const right = compact ? Math.min(260, width * .42) : Math.min(width * .245, 340, titleClearance);
         // On stacked layouts the whole blade sits below the title, including idle lift.
         const y = 100 + title.height + (compact ? Math.max(130, scale * 560 + 26) : 125);
@@ -115,7 +115,7 @@ export default function EventsQuill() {
           .to(drift, { x: 0, y: 0, angle: 0, duration: 3.4 });
         sequence = gsap.timeline({ paused: true, onUpdate: render })
           .to(playhead, { entry: 1, duration: .9, ease: 'sine.inOut' })
-          .to(playhead, { ink: 1, duration: 3.4, ease: 'sine.inOut' })
+          .to(playhead, { ink: 1, duration: 3.1, ease: 'sine.inOut' })
           .to(playhead, { settle: 1, duration: .9, ease: 'sine.inOut' });
         const replayForward = () => {
           if (!sequence) return;
