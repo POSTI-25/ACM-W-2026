@@ -1,8 +1,7 @@
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import featherSilhouette from '../assets/decor/black-feather.svg';
-import spilledInk from '../assets/decor/spilled-ink.svg';
+import JourneyStationery from './JourneyStationery';
 import './ChapterJourney.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -82,7 +81,9 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
       // Bound drift to the title surround; solid artwork never reaches event copy.
       element.querySelectorAll<HTMLElement>('[data-stationery]').forEach(asset => {
         const quill = asset.dataset.stationery === 'quill';
-        gsap.fromTo(asset, { y: () => Math.min(24, innerWidth * .035), rotation: quill ? -5 : 3 }, {
+        const track = asset.querySelector('[data-stationery-scroll]');
+        if (!track) return;
+        gsap.fromTo(track, { y: () => Math.min(24, innerWidth * .035), rotation: quill ? -5 : 3 }, {
           y: () => -Math.min(24, innerWidth * .035), rotation: quill ? 6 : -3, ease: 'none',
           scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -30%', scrub: 1.5, invalidateOnRefresh: true },
         });
@@ -113,8 +114,8 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
       </svg>
       <div className="journey-portal"><div className="journey-portal-art"><Orbit/></div></div>
       <div className="journey-asset journey-asset--spark" data-journey-drift=".7"><Spark/></div>
-      <div className="journey-asset journey-asset--quill" data-stationery="quill"><img src={featherSilhouette} alt="" width={260} height={560} decoding="async" draggable={false}/></div>
-      <div className="journey-asset journey-asset--ink" data-stationery="ink"><img src={spilledInk} alt="" width={380} height={240} decoding="async" draggable={false}/></div>
+      <JourneyStationery kind="quill"/>
+      <JourneyStationery kind="ink"/>
       <div className="journey-asset journey-asset--orbit" data-journey-drift=".65"><Orbit label="CREATE · CONNECT · EXPLORE"/></div>
       <div className="journey-asset journey-asset--letter" data-journey-drift="1.3"><SealedLetter/></div>
       <div className="journey-asset journey-asset--send" data-journey-drift="1.8"><Plane/></div>
