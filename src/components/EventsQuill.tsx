@@ -24,7 +24,7 @@ function pointAt(points: Point[], progress: number): Point {
     y: points[index].y + (points[index + 1].y - points[index].y) * blend };
 }
 
-/** A scroll-owned nib traces a separate left flourish, then softly suspends. */
+/** Either scroll direction cues the same forward-only flourish and soft suspension. */
 export default function EventsQuill() {
   const root = useRef<SVGSVGElement>(null);
   const approachRef = useRef<SVGPathElement>(null);
@@ -53,14 +53,14 @@ export default function EventsQuill() {
       let scale = .3;
       let rest: Point = { x: 0, y: 0 };
       let inView = false;
-      let scrollActive = false;
       let idleRunning = false;
       let idle: gsap.core.Timeline | undefined;
+      let sequence: gsap.core.Timeline | undefined;
       const updateIdle = () => {
         const shouldRun = moving && inView && !document.hidden && playhead.settle > 0;
+        pen.style.willChange = shouldRun || (inView && sequence?.isActive()) ? 'transform' : 'auto';
         if (shouldRun === idleRunning) return;
         idleRunning = shouldRun;
-        pen.style.willChange = shouldRun || scrollActive ? 'transform' : 'auto';
         if (shouldRun) idle?.play(); else idle?.pause();
       };
       const render = () => {
@@ -68,7 +68,7 @@ export default function EventsQuill() {
         const writing = playhead.ink > 0 || playhead.entry >= 1;
         const traced = pointAt(writing ? inkPoints : entryPoints, writing ? playhead.ink : playhead.entry);
         const settle = playhead.settle;
-        // Idle blends out before reverse scrolling retracts the stroke: the nib stays exact.
+        // Blend idle in only after drawing: the nib stays on the ink endpoint.
         const ambient = settle * settle;
         const x = traced.x + (rest.x - traced.x) * settle + drift.x * ambient;
         const y = traced.y + (rest.y - traced.y) * settle + drift.y * ambient;
@@ -113,27 +113,38 @@ export default function EventsQuill() {
           .to(drift, { x: 2, y: -3, angle: .8, duration: 3.1 })
           .to(drift, { x: -1.8, y: 1.3, angle: -.65, duration: 3.7 })
           .to(drift, { x: 0, y: 0, angle: 0, duration: 3.4 });
-        const sequence = gsap.timeline({ paused: true, onUpdate: render })
-          .to(playhead, { entry: 1, duration: .24, ease: 'sine.inOut' })
-          .to(playhead, { ink: 1, duration: .64, ease: 'sine.inOut' })
-          .to(playhead, { settle: 1, duration: .22, ease: 'sine.inOut' });
-        // Attach the completed sequence so breakpoint changes initialize at current scroll.
+        sequence = gsap.timeline({ paused: true, onUpdate: render })
+          .to(playhead, { entry: 1, duration: .9, ease: 'sine.inOut' })
+          .to(playhead, { ink: 1, duration: 3.4, ease: 'sine.inOut' })
+          .to(playhead, { settle: 1, duration: .9, ease: 'sine.inOut' });
+        const replayForward = () => {
+          if (!sequence) return;
+          // A direction change must never rewind an unfinished stroke.
+          if (sequence.progress() > 0 && sequence.progress() < 1) {
+            sequence.play();
+          } else {
+            idle?.pause(0);
+            sequence.restart();
+          }
+        };
         ScrollTrigger.create({
-          animation: sequence,
-          trigger: events, start: 'top 95%', end: 'top 8%', scrub: 1.5,
+          trigger: events, start: 'top 55%', end: 'top -10%',
           invalidateOnRefresh: true,
-          onToggle: self => {
-            scrollActive = self.isActive;
-            pen.style.willChange = scrollActive || idleRunning ? 'transform' : 'auto';
-          },
+          onEnter: replayForward,
+          onEnterBack: replayForward,
         });
       }
+      const updatePlayback = () => {
+        if (!inView || document.hidden) sequence?.pause();
+        else if (sequence && sequence.progress() > 0 && sequence.progress() < 1) sequence.play();
+        updateIdle();
+      };
       const visibility = new IntersectionObserver(entries => {
         inView = entries.some(entry => entry.isIntersecting);
-        updateIdle();
+        updatePlayback();
       }, { rootMargin: '160px 0px' });
       visibility.observe(intro);
-      document.addEventListener('visibilitychange', updateIdle);
+      document.addEventListener('visibilitychange', updatePlayback);
       const resize = new ResizeObserver(measure);
       resize.observe(journey);
       let live = true;
@@ -142,10 +153,11 @@ export default function EventsQuill() {
       ScrollTrigger.addEventListener('refreshInit', measure);
       return () => {
         live = false;
+        sequence?.kill();
         idle?.kill();
         resize.disconnect();
         visibility.disconnect();
-        document.removeEventListener('visibilitychange', updateIdle);
+        document.removeEventListener('visibilitychange', updatePlayback);
         document.fonts.removeEventListener('loadingdone', measure);
         ScrollTrigger.removeEventListener('refreshInit', measure);
         pen.style.removeProperty('will-change');
