@@ -202,7 +202,7 @@ export default function WomenInStem() {
         const restingY = () => {
           if (!mobile) return 0;
           const text = section.querySelector<HTMLElement>(".scientist-text")!;
-          const angle = Math.abs(scientists[i].photoRotation) * DEG;
+          const angle = Math.abs(scientists[i].photoRotation - (reduced ? 0 : 15)) * DEG;
           const halfHeight = (photo.offsetHeight * Math.cos(angle) + photo.offsetWidth * Math.sin(angle)) / 2;
           const center = window.innerHeight / 2;
           // Keep the rotated paper above longer biographies on short phones.
@@ -212,34 +212,38 @@ export default function WomenInStem() {
         gsap.set(photo, {
           xPercent: -50, yPercent: -50,
           x: () => mobile ? 0 : -window.innerWidth * .18,
-          y: () => restingY() + (reduced ? 0 : window.innerHeight * (mobile ? .36 : .52)),
-          scale: reduced ? 1 : .91,
-          rotation: scientists[i].photoRotation - (reduced ? 0 : 3),
+          // Start with the entire rotated print below the viewport, including
+          // its upper corners. The rise, rather than a fade, reveals it.
+          y: () => reduced ? restingY() : window.innerHeight * .5 + photo.offsetHeight * .7 + 48,
+          scale: reduced ? 1 : .94,
+          rotation: scientists[i].photoRotation - (reduced ? 0 : 2),
           opacity: 0,
           transformOrigin: "50% 70%",
         });
-        // Separate from the globe timeline: one continuous, reversible lift.
-        // A brief visibility ramp reveals the print; the longer rise supplies
-        // the entrance, rather than a pop-in or an endless idle bob.
+        // A long, almost linear lift with accumulating tilt, like archival
+        // prints drifting past the camera. The globe has its own timeline.
         const portrait = gsap.timeline({
           scrollTrigger: {
             trigger: section, start: "top bottom", end: "bottom top",
-            scrub: reduced ? true : 1.05,
+            scrub: reduced ? true : 1.15,
             invalidateOnRefresh: true,
             onToggle: self => { photo.style.willChange = self.isActive ? "transform, opacity" : "auto"; },
           },
         });
-        portrait.to(photo, { opacity: 1, duration: reduced ? .01 : .055, ease: "sine.out" }, .30);
+        if (reduced) portrait.to(photo, { opacity: 1, duration: .01 }, .30);
+        else portrait.set(photo, { opacity: 1 }, .26);
         if (!reduced) {
           portrait.to(photo, {
-            y: restingY, scale: 1, rotation: scientists[i].photoRotation,
-            duration: .19, ease: "power1.out",
+            y: restingY, scale: 1, rotation: scientists[i].photoRotation - 10,
+            duration: .25, ease: "none",
           }, .28);
           portrait.to(photo, {
-            y: () => restingY() - window.innerHeight * .035,
-            rotation: scientists[i].photoRotation + .7,
-            duration: .13, ease: "sine.inOut",
-          }, .47);
+            y: () => mobile
+              ? Math.max(restingY() - window.innerHeight * .045, 20 + photo.offsetHeight * .6 - window.innerHeight / 2)
+              : -window.innerHeight * .04,
+            rotation: scientists[i].photoRotation - 15,
+            duration: .10, ease: "sine.out",
+          }, .53);
         }
         if (i < scientists.length - 1) {
           portrait.to(photo, { opacity: 0, duration: .08, ease: "sine.in" }, .60);
