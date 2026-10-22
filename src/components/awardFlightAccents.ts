@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { awardLocalRect } from './awardFlightLayout';
 
 /** A small reusable SVG pool for quick, hand-inked stunt and speed accents. */
 export function createAwardFlightAccents(host: HTMLElement) {
@@ -47,10 +48,8 @@ export function createAwardFlightAccents(host: HTMLElement) {
     resize(w: number, h: number) {
       width = w; height = h;
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      const frame = host.getBoundingClientRect();
-      protectedText = [...host.querySelectorAll('[data-award-banner] h2, [data-award-banner] p')].map(element => {
-        const r = element.getBoundingClientRect();
-        return { left: r.left - frame.left, right: r.right - frame.left, top: r.top - frame.top, bottom: r.bottom - frame.top };
+      protectedText = [...host.querySelectorAll<HTMLElement>('[data-award-banner] h2, [data-award-banner] p')].map(element => {
+        return awardLocalRect(element, host);
       });
       effects.forEach(effect => { effect.born = -Infinity; effect.group.style.opacity = '0'; });
       lastTime = -Infinity;

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { awardHeartCue, sampleAwardFlight, sampleHeartOutline, type FlightPose } from './awardFlightMotion';
 import { createAwardInkTrail } from './awardFlightTrail';
 import { createAwardFlightAccents } from './awardFlightAccents';
+import { awardLocalRect } from './awardFlightLayout';
 
 export type AwardFlightController = { setActive(active: boolean): void; dispose(): void };
 const TAU = Math.PI * 2;
@@ -86,9 +87,8 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
   const cameraPosition = new THREE.Vector3(), cameraAim = new THREE.Vector3(), targetAim = new THREE.Vector3();
 
   const measure = () => {
-    const bounds = stage.getBoundingClientRect();
-    width = Math.max(1, bounds.width);
-    height = Math.max(1, bounds.height);
+    width = Math.max(1, stage.offsetWidth);
+    height = Math.max(1, stage.offsetHeight);
     distance = Math.max(height * 1.2, width * .9);
     renderer.setSize(Math.round(width), Math.round(height), false);
     camera.aspect = width / height;
@@ -96,9 +96,9 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
     camera.updateProjectionMatrix();
     aircraft.plane.scale.setScalar(width < 640 ? 30 : 36);
     // Softly attenuate the flight behind type, preserving both legibility and motion.
-    const holes = [...banner.querySelectorAll('h2, p')].map(element => {
-      const rect = element.getBoundingClientRect();
-      const x = rect.left - bounds.left - 16, y = rect.top - bounds.top - 16;
+    const holes = [...banner.querySelectorAll<HTMLElement>('h2, p')].map(element => {
+      const rect = awardLocalRect(element, stage);
+      const x = rect.left - 16, y = rect.top - 16;
       const w = rect.width + 32, h = rect.height + 32;
       return `M${x} ${y}h${w}v${h}h${-w}Z`;
     }).join(' ');
@@ -108,10 +108,10 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
     host.style.setProperty('-webkit-mask-image', maskImage);
     trail.resize(width, height);
     accents.resize(width, height);
-    const credit = banner.querySelector('p')!.getBoundingClientRect();
-    heartY = Math.min(90, Math.max(50, (height - (credit.bottom - bounds.top) - 30) / 2));
+    const credit = awardLocalRect(banner.querySelector('p')!, stage);
+    heartY = Math.min(90, Math.max(50, (height - credit.bottom - 30) / 2));
     heartX = Math.min(width < 640 ? 82 : 105, width * .22);
-    heartCenter.set(width * (width < 640 ? .55 : .67), credit.bottom - bounds.top + heartY + 15);
+    heartCenter.set(width * (width < 640 ? .55 : .67), credit.bottom + heartY + 15);
     hasPreviousPosition = false;
   };
 

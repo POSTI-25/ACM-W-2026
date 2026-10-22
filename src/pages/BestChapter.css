@@ -1,3 +1,4 @@
+.award-reveal { position: relative; width: 100%; }
 .award-scene {
   position: relative;
   isolation: isolate;
@@ -5,6 +6,7 @@
   padding-top: clamp(3rem, 8vh, 5rem);
   padding-bottom: clamp(6rem, 16vh, 10rem);
   overflow: clip;
+  transform-origin: 50% 60%;
 }
 .award-banner {
   position: relative;
