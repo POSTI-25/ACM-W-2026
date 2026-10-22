@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -186,6 +186,73 @@ export default function WomenInStem() {
   const globeContainerRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const media = gsap.matchMedia();
+    media.add({
+      mobile: "(max-width: 48rem)",
+      reduced: "(prefers-reduced-motion: reduce)",
+      moving: "(prefers-reduced-motion: no-preference)",
+    }, context => {
+      const mobile = Boolean(context.conditions?.mobile);
+      const reduced = Boolean(context.conditions?.reduced);
+      root.querySelectorAll<HTMLElement>(".scientist-section").forEach((section, i) => {
+        const photo = section.querySelector<HTMLElement>(".photo-frame")!;
+        const restingY = () => {
+          if (!mobile) return 0;
+          const text = section.querySelector<HTMLElement>(".scientist-text")!;
+          const angle = Math.abs(scientists[i].photoRotation) * DEG;
+          const halfHeight = (photo.offsetHeight * Math.cos(angle) + photo.offsetWidth * Math.sin(angle)) / 2;
+          const center = window.innerHeight / 2;
+          // Keep the rotated paper above longer biographies on short phones.
+          return Math.max(20 + halfHeight - center,
+            Math.min(-window.innerHeight * .04, text.offsetTop - 40 - halfHeight - center));
+        };
+        gsap.set(photo, {
+          xPercent: -50, yPercent: -50,
+          x: () => mobile ? 0 : -window.innerWidth * .18,
+          y: () => restingY() + (reduced ? 0 : window.innerHeight * (mobile ? .36 : .52)),
+          scale: reduced ? 1 : .91,
+          rotation: scientists[i].photoRotation - (reduced ? 0 : 3),
+          opacity: 0,
+          transformOrigin: "50% 70%",
+        });
+        // Separate from the globe timeline: one continuous, reversible lift.
+        // A brief visibility ramp reveals the print; the longer rise supplies
+        // the entrance, rather than a pop-in or an endless idle bob.
+        const portrait = gsap.timeline({
+          scrollTrigger: {
+            trigger: section, start: "top bottom", end: "bottom top",
+            scrub: reduced ? true : 1.05,
+            invalidateOnRefresh: true,
+            onToggle: self => { photo.style.willChange = self.isActive ? "transform, opacity" : "auto"; },
+          },
+        });
+        portrait.to(photo, { opacity: 1, duration: reduced ? .01 : .055, ease: "sine.out" }, .30);
+        if (!reduced) {
+          portrait.to(photo, {
+            y: restingY, scale: 1, rotation: scientists[i].photoRotation,
+            duration: .19, ease: "power1.out",
+          }, .28);
+          portrait.to(photo, {
+            y: () => restingY() - window.innerHeight * .035,
+            rotation: scientists[i].photoRotation + .7,
+            duration: .13, ease: "sine.inOut",
+          }, .47);
+        }
+        if (i < scientists.length - 1) {
+          portrait.to(photo, { opacity: 0, duration: .08, ease: "sine.in" }, .60);
+        }
+        portrait.set({}, {}, 1);
+      });
+      return () => {
+        root.querySelectorAll<HTMLElement>(".photo-frame").forEach(photo => photo.style.removeProperty("will-change"));
+      };
+    }, root);
+    return () => media.revert();
+  }, []);
+
   useEffect(() => {
     // Globe3D wires up `group`/`camera` in its own effect, and children's
     // effects run before the parent's, so the handle is ready here.
@@ -219,7 +286,6 @@ export default function WomenInStem() {
         );
 
         const countryImg = section.querySelector<HTMLElement>(".country-img")!;
-        const photoFrame = section.querySelector<HTMLElement>(".photo-frame")!;
         const textEl = section.querySelector<HTMLElement>(".scientist-text")!;
 
         gsap.set(countryImg, {
@@ -229,14 +295,6 @@ export default function WomenInStem() {
           scale: 0.3,
           x: 0,
           y: 0,
-        });
-        gsap.set(photoFrame, {
-          xPercent: -50,
-          yPercent: -50,
-          opacity: 0,
-          y: mobile ? "2vh" : "4vh",
-          x: 0,
-          rotation: sci.photoRotation,
         });
         gsap.set(textEl, {
           yPercent: mobile ? 0 : -50,
@@ -290,22 +348,12 @@ export default function WomenInStem() {
             { y: "-22vh", x: 0, opacity: 0.65, scale: 0.75, duration: T.spreadDur, ease: "power2.out" },
             T.spreadStart,
           );
-          tl.to(
-            photoFrame,
-            { opacity: 1, x: 0, y: "-4vh", duration: T.spreadDur, ease: "power2.out" },
-            T.spreadStart + 0.02,
-          );
           tl.to(textEl, { opacity: 1, duration: T.textDur, ease: "power1.out" }, T.textStart);
         } else {
           tl.to(
             countryImg,
             { x: "-22vw", opacity: 0.85, duration: T.spreadDur, ease: "power2.out" },
             T.spreadStart,
-          );
-          tl.to(
-            photoFrame,
-            { opacity: 1, x: "-18vw", y: 0, duration: T.spreadDur, ease: "power2.out" },
-            T.spreadStart + 0.02,
           );
           tl.to(textEl, { opacity: 1, x: 0, duration: T.textDur, ease: "power1.out" }, T.textStart);
         }
@@ -314,7 +362,7 @@ export default function WomenInStem() {
            scrolls away with the sticky globe still dissolved. */
         if (!isLast) {
           tl.to(
-            [countryImg, photoFrame, textEl],
+            [countryImg, textEl],
             { opacity: 0, duration: T.contentOutDur, ease: "power1.in" },
             T.contentOutStart,
           );
