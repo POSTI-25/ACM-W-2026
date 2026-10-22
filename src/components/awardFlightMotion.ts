@@ -15,7 +15,7 @@ export type FlightPose = {
 export function sampleAwardFlight(phase: number, width: number, height: number, out: FlightPose): FlightPose {
   // Positive speed throughout: fast straight crossovers, slow lobe apexes.
   const theta = TAU * (2 * phase + .035 * Math.sin(TAU * 4 * phase));
-  const a = width * .50, b = height * .40, c = height * .045;
+  const a = width * .72, b = height * .40, c = height * .045;
   const dx = a * Math.cos(theta);
   const dy = 2 * b * Math.cos(2 * theta) + 3 * c * Math.cos(3 * theta);
   const ddx = -a * Math.sin(theta);
@@ -32,5 +32,22 @@ export function sampleAwardFlight(phase: number, width: number, height: number, 
   out.roll = TAU * smooth(.10, .27, phase) - TAU * smooth(.80, .97, phase)
     + Math.PI * inverted;
   out.orbit = Math.PI * .75 + TAU * phase + .24 * Math.sin(TAU * 2 * phase);
+  return out;
+}
+
+export function awardHeartCue(phase: number) {
+  return {
+    blend: smooth(.30, .36, phase) - smooth(.50, .56, phase),
+    progress: clamp((phase - .36) / .14, 0, 1),
+    cameraPhase: phase < .30 ? phase : .30 + (phase - .30) * smooth(.58, .72, phase),
+    lifetime: 3.2 + 2.8 * (smooth(.30, .36, phase) - smooth(.59, .67, phase)),
+  };
+}
+
+/** A closed heart, rather than a heart icon emitted by an unrelated path. */
+export function sampleHeartOutline(progress: number, out: { x: number; y: number }) {
+  const t = TAU * progress;
+  out.x = Math.pow(Math.sin(t), 3);
+  out.y = (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) + 2.5) / 14.5;
   return out;
 }

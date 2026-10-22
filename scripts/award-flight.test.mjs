@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sampleAwardFlight } from '../src/components/awardFlightMotion.ts';
+import { awardHeartCue, sampleAwardFlight, sampleHeartOutline } from '../src/components/awardFlightMotion.ts';
 
 const pose = p => sampleAwardFlight(p, 1280, 700, {});
 const near = (a, b, epsilon = 1e-6) => assert.ok(Math.abs(a - b) < epsilon, `${a} != ${b}`);
@@ -77,4 +77,30 @@ test('the ink ribbon uses responsive pixel widths and resets cleanly on resize',
   near(position.getY(0), 50);
   near(position.getZ(0), 10);
   trail.dispose();
+});
+
+test('the heart is closed, has two lobes and a pointed lower tip', () => {
+  const a = sampleHeartOutline(0, {}), b = sampleHeartOutline(1, {});
+  near(a.x, b.x); near(a.y, b.y);
+  assert.ok(sampleHeartOutline(.25, {}).x > .9);
+  assert.ok(sampleHeartOutline(.75, {}).x < -.9);
+  assert.ok(sampleHeartOutline(.5, {}).y < -.95);
+  assert.ok(sampleHeartOutline(.12, {}).y > a.y);
+});
+
+test('the heart cue holds the camera and preserves the trail long enough to close', () => {
+  near(awardHeartCue(.25).blend, 0);
+  near(awardHeartCue(.40).blend, 1);
+  near(awardHeartCue(.40).cameraPhase, .30);
+  near(awardHeartCue(.50).progress, 1);
+  assert.ok(awardHeartCue(.50).lifetime >= 6);
+  near(awardHeartCue(.75).blend, 0);
+  near(awardHeartCue(1).cameraPhase, 1);
+  near(awardHeartCue(1).lifetime, 3.2);
+});
+
+test('the wider flight envelope reaches beyond the previous half-width limit', () => {
+  const samples = Array.from({ length: 1000 }, (_, i) => pose(i / 1000));
+  assert.ok(Math.max(...samples.map(p => p.x)) > 1280 * .70);
+  assert.ok(Math.min(...samples.map(p => p.x)) < -1280 * .70);
 });

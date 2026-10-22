@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { sampleAwardFlight, type FlightPose } from './awardFlightMotion';
+import { awardHeartCue, sampleAwardFlight, sampleHeartOutline, type FlightPose } from './awardFlightMotion';
 import { createAwardInkTrail } from './awardFlightTrail';
+import { createAwardFlightAccents } from './awardFlightAccents';
 
 export type AwardFlightController = { setActive(active: boolean): void; dispose(): void };
 const TAU = Math.PI * 2;
@@ -61,19 +62,27 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
   const trail = createAwardInkTrail();
   scene.add(trail.mesh);
   const tail = new THREE.Vector3();
+  const accents = createAwardFlightAccents(stage);
+  const heartWorld = new THREE.Vector3(), previousPosition = new THREE.Vector3();
+  const heartPoint = { x: 0, y: 0 };
+  const heartCenter = new THREE.Vector2();
+  let heartX = 100, heartY = 90, hasPreviousPosition = false;
 
   let width = 1, height = 1, distance = 1000;
   let frame: number | undefined;
   let active = false;
   let lost = false;
   let disposed = false;
-  let elapsed = 1.4;
+  // Introduce the celebratory heart near the start of the first visible pass.
+  let elapsed = 8.2;
   let previousTime: number | undefined;
   let initialized = false;
   const pose: FlightPose = { x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, bank: 0, roll: 0, orbit: 0 };
+  const cameraPose: FlightPose = { ...pose };
   const forward = new THREE.Vector3(), side = new THREE.Vector3(), up = new THREE.Vector3();
   const worldUp = new THREE.Vector3(0, 0, 1), rollAxis = new THREE.Vector3(1, 0, 0);
   const basis = new THREE.Matrix4(), attitude = new THREE.Quaternion(), roll = new THREE.Quaternion();
+  const heartAttitude = new THREE.Quaternion(), heartRoll = new THREE.Quaternion();
   const cameraPosition = new THREE.Vector3(), cameraAim = new THREE.Vector3(), targetAim = new THREE.Vector3();
 
   const measure = () => {
@@ -98,35 +107,64 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
     host.style.maskImage = maskImage;
     host.style.setProperty('-webkit-mask-image', maskImage);
     trail.resize(width, height);
+    accents.resize(width, height);
+    const credit = banner.querySelector('p')!.getBoundingClientRect();
+    heartY = Math.min(90, Math.max(50, (height - (credit.bottom - bounds.top) - 30) / 2));
+    heartX = Math.min(width < 640 ? 82 : 105, width * .22);
+    heartCenter.set(width * (width < 640 ? .55 : .67), credit.bottom - bounds.top + heartY + 15);
+    hasPreviousPosition = false;
   };
 
   const render = (dt: number) => {
     const phase = (elapsed / 26) % 1;
     sampleAwardFlight(phase, width, height, pose);
+    const heart = awardHeartCue(phase);
+    sampleAwardFlight(heart.cameraPhase, width, height, cameraPose);
     aircraft.plane.position.set(pose.x, pose.y, pose.z);
-    forward.set(pose.dx, pose.dy, pose.dz).normalize();
+
+    // Complete camera orbit: overhead tracking -> low side profile -> opposite side.
+    cameraPosition.set(Math.sin(cameraPose.orbit) * distance * 1.2,
+      Math.sin(TAU * 2 * heart.cameraPhase - .4) * distance * .10,
+      Math.cos(cameraPose.orbit) * distance * 1.2);
+    camera.position.lerp(cameraPosition, initialized ? 1 - Math.exp(-dt * 4) : 1);
+    targetAim.set(cameraPose.x, cameraPose.y, cameraPose.z).multiplyScalar(.13);
+    cameraAim.lerp(targetAim, initialized ? 1 - Math.exp(-dt * 3.5) : 1);
+    camera.up.set(Math.sin(TAU * 3 * heart.cameraPhase) * .018, 1, 0).normalize();
+    camera.lookAt(cameraAim);
+    camera.updateMatrixWorld();
+
+    if (heart.blend > 0) {
+      sampleHeartOutline(heart.progress + .015, heartPoint);
+      const depth = camera.position.distanceTo(cameraAim) * (1 + .025 * Math.sin(heart.progress * TAU * 2));
+      const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * depth;
+      heartWorld.set((heartCenter.x + heartX * heartPoint.x - width / 2) / height * viewHeight,
+        (height / 2 - heartCenter.y + heartY * heartPoint.y) / height * viewHeight, -depth)
+        .applyQuaternion(camera.quaternion).add(camera.position);
+      aircraft.plane.position.lerp(heartWorld, heart.blend);
+    }
+    if (hasPreviousPosition && dt > 0) forward.subVectors(aircraft.plane.position, previousPosition);
+    else forward.set(pose.dx, pose.dy, pose.dz);
+    if (forward.lengthSq() < .0001) forward.set(pose.dx, pose.dy, pose.dz);
+    forward.normalize();
+    previousPosition.copy(aircraft.plane.position);
+    hasPreviousPosition = true;
     side.crossVectors(worldUp, forward).normalize();
     up.crossVectors(forward, side).normalize();
     basis.makeBasis(forward, side, up);
     attitude.setFromRotationMatrix(basis);
+    heartAttitude.copy(attitude);
     roll.setFromAxisAngle(rollAxis, pose.bank + pose.roll);
     attitude.multiply(roll);
+    heartRoll.setFromAxisAngle(rollAxis, Math.sin(heart.progress * TAU) * .45);
+    heartAttitude.multiply(heartRoll);
+    attitude.slerp(heartAttitude, heart.blend);
     aircraft.plane.quaternion.slerp(attitude, initialized ? 1 - Math.exp(-dt * 13) : 1);
-
-    // Complete camera orbit: overhead tracking -> low side profile -> opposite side.
-    cameraPosition.set(Math.sin(pose.orbit) * distance * 1.2,
-      Math.sin(TAU * 2 * phase - .4) * distance * .10,
-      Math.cos(pose.orbit) * distance * 1.2);
-    camera.position.lerp(cameraPosition, initialized ? 1 - Math.exp(-dt * 4) : 1);
-    targetAim.copy(aircraft.plane.position).multiplyScalar(.13);
-    cameraAim.lerp(targetAim, initialized ? 1 - Math.exp(-dt * 3.5) : 1);
-    camera.up.set(Math.sin(TAU * 3 * phase) * .018, 1, 0).normalize();
-    camera.lookAt(cameraAim);
-    camera.updateMatrixWorld();
 
     tail.set(-1.15, 0, -.05).multiplyScalar(aircraft.plane.scale.x)
       .applyQuaternion(aircraft.plane.quaternion).add(aircraft.plane.position);
-    trail.update(tail, elapsed);
+    tail.lerp(aircraft.plane.position, heart.blend);
+    trail.update(tail, elapsed, camera, heart.lifetime);
+    accents.update(aircraft.plane.position, camera, elapsed, phase, pose.bank, heart.blend);
     renderer.render(scene, camera);
     initialized = true;
   };
@@ -178,6 +216,7 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
       canvas.removeEventListener('webglcontextrestored', onRestored);
       aircraft.dispose();
       trail.dispose();
+      accents.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       canvas.remove();
