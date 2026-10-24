@@ -9,9 +9,8 @@ import ContributorsSection from "./pages/Contributors";
 import Events from "./pages/Events";
 import BestChapter from "./pages/BestChapter";
 import TeamPage from "./pages/TeamPage";
-import WomenInStem from "./pages/WomenInStem";
+import WomenJourney from "./components/WomenJourney";
 import Footer from "./components/Footer";
-import TitleCard from "./components/TitleCard";
 import ChapterJourney, { ChapterTrail } from "./components/ChapterJourney";
 
 import "./App.css";
@@ -49,11 +48,11 @@ function GlobalNavbar() {
 
   return (
     <div
-      className={`desktop-envelope-navbar fixed top-24 left-20 z-50 transition-all duration-500 origin-center ${
-        showNavbar ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
+      className={`desktop-envelope-navbar ${
+        showNavbar ? 'is-visible' : ''
       }`}
     >
-      <EnvelopeMenu />
+      {showNavbar && <EnvelopeMenu />}
     </div>
   );
 }
@@ -97,13 +96,7 @@ export default function App() {
         <BlogStamps />
       </section>
 
-      <section id="title-card-section">
-        <TitleCard />
-      </section>
-
-      <section id="women-in-stem">
-        <WomenInStem />
-      </section>
+      <WomenJourney />
 
       <section id="team">
         <TeamPage />

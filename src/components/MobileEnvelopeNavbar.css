@@ -1,14 +1,14 @@
 .mobile-envelope-navbar {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: max(0.75rem, env(safe-area-inset-left));
   z-index: 80;
   display: none;
-  width: 100%;
+  width: calc(100% - 1.5rem);
   height: 3.5rem;
   align-items: center;
   gap: 0;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
   border-bottom: 2px solid transparent;
   box-shadow: none;
@@ -49,13 +49,7 @@
   background: transparent;
 }
 
-.mobile-envelope-toggle img {
-  display: block;
-  width: 2.45rem;
-  height: 2.45rem;
-  object-fit: contain;
-  filter: drop-shadow(0 0.12rem 0.12rem rgba(0, 0, 0, 0.2));
-}
+.mobile-envelope-toggle .navbar-envelope { width: 2.45rem; }
 
 .mobile-envelope-links {
   display: flex;

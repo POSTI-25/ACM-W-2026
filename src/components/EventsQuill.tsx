@@ -1,176 +1,230 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useId, useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import quill from '../assets/decor/black-feather.svg';
+import artwork from '../assets/decor/events-quote.json';
 import './EventsQuill.css';
 
 gsap.registerPlugin(ScrollTrigger);
-type Point = { x: number; y: number };
-const SAMPLE_COUNT = 240;
+const clamp = gsap.utils.clamp(0, 1);
+const pools = [[.08, .45], [.36, .25], [.68, .72]];
+const left = Math.min(...artwork.glyphs.map(glyph => glyph.bounds[0]));
+const right = Math.max(...artwork.glyphs.map(glyph => glyph.bounds[0] + glyph.bounds[2]));
+const span = right - left;
+const at = (fraction: number) => left + span * fraction;
+// One rising ribbon with a loose loop; independent of the lettering's outlines.
+const flourish = `M${left - 32} 288
+  C${left - 28} 226 ${at(.025)} 214 ${at(.075)} 236
+  S${at(.16)} 288 ${at(.205)} 254
+  C${at(.25)} 220 ${at(.305)} 154 ${at(.325)} 98
+  C${at(.348)} 30 ${at(.385)} 70 ${at(.345)} 143
+  C${at(.30)} 232 ${at(.35)} 288 ${at(.395)} 250
+  C${at(.445)} 214 ${at(.47)} 191 ${at(.525)} 209
+  S${at(.66)} 250 ${at(.72)} 185
+  C${at(.76)} 164 ${at(.765)} 108 ${at(.805)} 116
+  S${at(.915)} 157 ${right + 28} 92`;
 
-/** Cache arc-length samples on layout changes, never during an animation frame. */
-function samplePath(path: SVGPathElement): Point[] {
-  const length = path.getTotalLength();
-  return Array.from({ length: SAMPLE_COUNT + 1 }, (_, index) => {
-    const point = path.getPointAtLength(length * index / SAMPLE_COUNT);
-    return { x: point.x, y: point.y };
-  });
-}
-function pointAt(points: Point[], progress: number): Point {
-  const position = Math.max(0, Math.min(1, progress)) * SAMPLE_COUNT;
-  const index = Math.min(SAMPLE_COUNT - 1, Math.floor(position));
-  const blend = position - index;
-  return { x: points[index].x + (points[index + 1].x - points[index].x) * blend,
-    y: points[index].y + (points[index + 1].y - points[index].y) * blend };
-}
-
-/** Either scroll direction cues the same forward-only flourish and soft suspension. */
+/** One continuous flourish releases a trailing, left-to-right seep of ink. */
 export default function EventsQuill() {
   const root = useRef<SVGSVGElement>(null);
-  const approachRef = useRef<SVGPathElement>(null);
-  const strokeRef = useRef<SVGPathElement>(null);
   const penRef = useRef<SVGGElement>(null);
+  const letteringRef = useRef<SVGGElement>(null);
+  const trailRef = useRef<SVGPathElement>(null);
+  const id = useId().replace(/:/g, '');
 
   useLayoutEffect(() => {
     const svg = root.current;
-    const approach = approachRef.current;
-    const stroke = strokeRef.current;
     const pen = penRef.current;
+    const lettering = letteringRef.current;
+    const trail = trailRef.current;
     const journey = svg?.closest('.chapter-journey');
-    const events = journey?.querySelector<HTMLElement>('#events');
-    const intro = events?.querySelector<HTMLElement>('.events-intro');
-    const heading = intro?.querySelector<HTMLElement>('h1');
-    if (!svg || !approach || !stroke || !pen || !journey || !events || !intro || !heading) return;
+    const cards = journey?.querySelector<HTMLElement>('.events-cards');
+    const events = cards?.closest('#events');
+    if (!svg || !pen || !lettering || !trail || !journey || !cards || !events) return;
 
+    const masks = Array.from(svg.querySelectorAll<SVGMaskElement>('[data-ink-mask]')).map(mask => ({
+      pool: mask.querySelector<SVGGElement>('[data-ink-pools]')!,
+      circles: Array.from(mask.querySelectorAll<SVGCircleElement>('circle')),
+      settled: mask.querySelector<SVGRectElement>('[data-ink-settled]')!,
+    }));
     const media = gsap.matchMedia();
-    media.add({ moving: '(prefers-reduced-motion: no-preference)', still: '(prefers-reduced-motion: reduce)', compact: '(max-width: 56.25rem)' }, context => {
+    media.add({ moving: '(prefers-reduced-motion: no-preference)', still: '(prefers-reduced-motion: reduce)' }, context => {
       const moving = Boolean(context.conditions?.moving);
-      const compact = Boolean(context.conditions?.compact);
-      const playhead = { entry: 0, ink: 0, settle: 0 };
-      const drift = { x: 0, y: 0, angle: 0 };
-      let entryPoints: Point[] = [];
-      let inkPoints: Point[] = [];
-      let scale = .3;
-      let rest: Point = { x: 0, y: 0 };
-      let inView = false;
-      let idleRunning = false;
-      let idle: gsap.core.Timeline | undefined;
+      const ink = artwork.glyphs.map(() => ({ progress: moving ? 0 : 1 }));
+      const length = trail.getTotalLength();
+      const points = Array.from({ length: 301 }, (_, index) => {
+        const point = trail.getPointAtLength(length * index / 300);
+        return { x: point.x, y: point.y };
+      });
+      const motion = { progress: 0 };
+      const pose = { x: points[0].x, y: points[0].y, tilt: -23, visibility: 0 };
+      let width = 1, height = 1;
+      let matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+      let trigger: ScrollTrigger | undefined;
       let sequence: gsap.core.Timeline | undefined;
-      const updateIdle = () => {
-        const shouldRun = moving && inView && !document.hidden && playhead.settle > 0;
-        pen.style.willChange = shouldRun || (inView && sequence?.isActive()) ? 'transform' : 'auto';
-        if (shouldRun === idleRunning) return;
-        idleRunning = shouldRun;
-        if (shouldRun) idle?.play(); else idle?.pause();
+      let requested = false, completed = false;
+      let inView = false;
+      const renderInk = (index: number) => {
+        const progress = ink[index].progress;
+        const mask = masks[index];
+        mask.pool.style.display = progress >= 1 ? 'none' : '';
+        mask.settled.style.display = progress >= 1 ? '' : 'none';
+        const [x, y, w, h] = artwork.glyphs[index].bounds;
+        const radius = Math.hypot(w, h) * 1.5;
+        mask.circles.forEach((circle, seed) => {
+          const bloom = clamp((progress - seed * .095) / (1 - seed * .095));
+          circle.setAttribute('cx', String(x + w * pools[seed][0]));
+          circle.setAttribute('cy', String(y + h * pools[seed][1]));
+          circle.setAttribute('r', String(radius * bloom * bloom));
+        });
       };
-      const render = () => {
-        if (!entryPoints.length || !inkPoints.length) return;
-        const writing = playhead.ink > 0 || playhead.entry >= 1;
-        const traced = pointAt(writing ? inkPoints : entryPoints, writing ? playhead.ink : playhead.entry);
-        const settle = playhead.settle;
-        // Blend idle in only after drawing: the nib stays on the ink endpoint.
-        const ambient = settle * settle;
-        const x = traced.x + (rest.x - traced.x) * settle + drift.x * ambient;
-        const y = traced.y + (rest.y - traced.y) * settle + drift.y * ambient;
-        const writingAngle = -3 + Math.sin(playhead.ink * Math.PI * 2) * 3;
-        const angle = writingAngle + (-18 - writingAngle) * settle + drift.angle * ambient;
-        // The artwork nib (18,542) is offset to local (0,0).
-        pen.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${angle}deg) scale(${scale})`;
-        pen.style.opacity = moving ? String(Math.min(1, playhead.entry * 4)) : '1';
-        stroke.setAttribute('stroke-dashoffset', String(moving ? 1 - playhead.ink : 0));
-        updateIdle();
+      const renderPen = () => {
+        const x = matrix.a * pose.x + matrix.c * pose.y + matrix.e;
+        const y = matrix.b * pose.x + matrix.d * pose.y + matrix.f;
+        const scale = Math.min(.62, width / 1050, height / 1050);
+        pen.setAttribute('transform', `translate(${x} ${y}) rotate(${pose.tilt}) scale(${scale})`);
+        pen.style.opacity = String(moving ? pose.visibility * .46 : 0);
+        trail.style.opacity = String(moving ? pose.visibility * .16 : 0);
+        trail.setAttribute('stroke-dashoffset', String(1 - motion.progress));
       };
+      const renderMotion = () => {
+        const position = motion.progress * (points.length - 1);
+        const index = Math.min(points.length - 2, Math.floor(position));
+        const mix = position - index;
+        pose.x = points[index].x + (points[index + 1].x - points[index].x) * mix;
+        pose.y = points[index].y + (points[index + 1].y - points[index].y) * mix;
+        pose.tilt = -23 + Math.sin(motion.progress * Math.PI * 3) * 8;
+        renderPen();
+      };
+      const followViewport = () => {
+        if (!trigger) return;
+        const y = gsap.utils.clamp(0, trigger.end - trigger.start, trigger.scroll() - trigger.start);
+        svg.style.transform = `translate3d(0, ${y}px, 0)`;
+      };
+      // Preserve the established diagonal fit and viewport placement.
+      const sceneTop = () => Math.max(cards.getBoundingClientRect().top - innerHeight * .85,
+        events.getBoundingClientRect().top - innerHeight * .12);
       const measure = () => {
         const frame = journey.getBoundingClientRect();
-        const title = heading.getBoundingClientRect();
-        const width = frame.width;
-        const height = title.height + 430;
-        // Local SVG canvas bounds the ink repaint; geometry is independent of scroll.
-        svg.style.top = `${title.top - frame.top - 100}px`;
+        width = frame.width;
+        height = innerHeight;
+        svg.style.top = `${(moving ? sceneTop() : cards.getBoundingClientRect().top) - frame.top}px`;
+        if (!moving) svg.style.removeProperty('transform');
         svg.style.height = `${height}px`;
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-        scale = 1.08 * (compact ? Math.min(.27, width / 1800) : Math.min(.44, Math.max(.34, width / 3100)));
-        const left = compact ? 22 : Math.max(32, Math.min(84, width * .055));
-        const curl = compact ? 28 : 46;
-        const word = heading.querySelector('.events-title-word')!.getBoundingClientRect();
-        // Reserve the enlarged blade's full sweep beside the wider title.
-        const titleClearance = word.left - frame.left - scale * 335 - curl - 8;
-        const right = compact ? Math.min(260, width * .42) : Math.min(width * .245, 340, titleClearance);
-        // On stacked layouts the whole blade sits below the title, including idle lift.
-        const y = 100 + title.height + (compact ? Math.max(130, scale * 560 + 26) : 125);
-        approach.setAttribute('d', `M${-width * .3 - 120},${y + 45} C${-width * .13},${y + 48} ${left - 50},${y - 22} ${left},${y}`);
-        stroke.setAttribute('d', `M${left},${y} C${left + 55},${y - 12} ${right - 50},${y + 14} ${right},${y} C${right + curl},${y - 16} ${right + curl},${y + 18} ${right + 15},${y + 18} C${right - 8},${y + 18} ${right - 10},${y + 5} ${right + 7},${y + 6}`);
-        entryPoints = samplePath(approach);
-        inkPoints = samplePath(stroke);
-        rest = { x: right - (compact ? 22 : 12), y: y - 12 };
-        if (!moving) Object.assign(playhead, { entry: 1, ink: 1, settle: 1 });
-        render();
+        const angle = -Math.atan2(height * .56, width * .8);
+        const cos = Math.cos(angle), sin = Math.sin(angle);
+        const box = lettering.getBBox();
+        const scale = Math.min(width * .89 / (box.width * cos - box.height * sin),
+          height * .805 / (-box.width * sin + box.height * cos));
+        const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+        matrix = { a: scale*cos, b: scale*sin, c: -scale*sin, d: scale*cos,
+          e: width*.5-scale*(cos*cx-sin*cy), f: height*.55-scale*(sin*cx+cos*cy) };
+        const transform = `matrix(${matrix.a} ${matrix.b} ${matrix.c} ${matrix.d} ${matrix.e} ${matrix.f})`;
+        lettering.setAttribute('transform', transform);
+        trail.setAttribute('transform', transform);
+        renderPen();
+        followViewport();
       };
+      const updatePlayback = () => {
+        if (!sequence) return;
+        if (inView && !document.hidden && requested && !completed) sequence.play();
+        else sequence.pause();
+      };
+      ink.forEach((_, index) => renderInk(index));
       measure();
       if (moving) {
-        // Three unequal, slow arcs feel less mechanical than a constant bounce.
-        idle = gsap.timeline({ paused: true, repeat: -1, onUpdate: render, defaults: { ease: 'sine.inOut' } })
-          .to(drift, { x: 2, y: -3, angle: .8, duration: 3.1 })
-          .to(drift, { x: -1.8, y: 1.3, angle: -.65, duration: 3.7 })
-          .to(drift, { x: 0, y: 0, angle: 0, duration: 3.4 });
-        sequence = gsap.timeline({ paused: true, onUpdate: render })
-          .to(playhead, { entry: 1, duration: .9, ease: 'sine.inOut' })
-          .to(playhead, { ink: 1, duration: 3.1, ease: 'sine.inOut' })
-          .to(playhead, { settle: 1, duration: .9, ease: 'sine.inOut' });
-        const replayForward = () => {
-          if (!sequence) return;
-          // A direction change must never rewind an unfinished stroke.
-          if (sequence.progress() > 0 && sequence.progress() < 1) {
-            sequence.play();
-          } else {
-            idle?.pause(0);
-            sequence.restart();
-          }
-        };
-        ScrollTrigger.create({
-          trigger: events, start: 'top 55%', end: 'top -10%',
-          invalidateOnRefresh: true,
-          onEnter: replayForward,
-          onEnterBack: replayForward,
+        const travelDuration = 4.8;
+        const travelAt = .12;
+        sequence = gsap.timeline({ paused: true, onComplete: () => { completed = true; } });
+        sequence.to(pose, { visibility: 1, duration: .35, ease: 'sine.inOut', onUpdate: renderPen }, 0);
+        sequence.to(motion, { progress: 1, duration: travelDuration,
+          ease: 'sine.inOut', onUpdate: renderMotion }, travelAt);
+        let previousRelease = 0;
+        artwork.glyphs.forEach((glyph, index) => {
+          // Wait until the flourish has passed this letter, including its return through the loop.
+          const threshold = glyph.bounds[0] + glyph.bounds[2] * .12;
+          let lastPass = 0;
+          points.forEach((point, sample) => { if (point.x <= threshold) lastPass = sample; });
+          const progress = clamp(lastPass / (points.length - 1));
+          // Invert the feather's sine easing so the ink consistently trails the nib.
+          const passedAt = travelAt + travelDuration * Math.acos(1 - 2 * progress) / Math.PI;
+          const release = Math.max(previousRelease + .045, passedAt + .1);
+          previousRelease = release;
+          sequence!.to(ink[index], { progress: 1, duration: .85, ease: 'sine.inOut',
+            onUpdate: () => renderInk(index) }, release);
         });
+        sequence.to(pose, { visibility: 0, tilt: -13, y: points.at(-1)!.y - 22,
+          duration: .65, ease: 'sine.inOut', onUpdate: renderPen }, travelAt + travelDuration);
+        trigger = ScrollTrigger.create({
+          trigger: cards, start: () => sceneTop() + window.scrollY, end: 'bottom 80%',
+          invalidateOnRefresh: true,
+          onUpdate: self => {
+            followViewport();
+            // Start the full sentence once; scrolling never inserts word pauses.
+            if (self.progress > 0) requested = true;
+            updatePlayback();
+          },
+          onRefresh: self => {
+            followViewport();
+            if (self.progress > 0) requested = true;
+            updatePlayback();
+          },
+        });
+        followViewport();
       }
-      const updatePlayback = () => {
-        if (!inView || document.hidden) sequence?.pause();
-        else if (sequence && sequence.progress() > 0 && sequence.progress() < 1) sequence.play();
-        updateIdle();
-      };
       const visibility = new IntersectionObserver(entries => {
         inView = entries.some(entry => entry.isIntersecting);
         updatePlayback();
-      }, { rootMargin: '160px 0px' });
-      visibility.observe(intro);
+      });
+      visibility.observe(cards);
       document.addEventListener('visibilitychange', updatePlayback);
-      const resize = new ResizeObserver(measure);
-      resize.observe(journey);
-      let live = true;
-      void document.fonts.ready.then(() => { if (live) measure(); });
-      document.fonts.addEventListener('loadingdone', measure);
+      const resize = new ResizeObserver(() => ScrollTrigger.refresh());
+      resize.observe(cards);
       ScrollTrigger.addEventListener('refreshInit', measure);
       return () => {
-        live = false;
         sequence?.kill();
-        idle?.kill();
-        resize.disconnect();
+        trigger?.kill();
         visibility.disconnect();
+        resize.disconnect();
         document.removeEventListener('visibilitychange', updatePlayback);
-        document.fonts.removeEventListener('loadingdone', measure);
+        svg.style.removeProperty('transform');
         ScrollTrigger.removeEventListener('refreshInit', measure);
-        pen.style.removeProperty('will-change');
       };
     }, svg);
     return () => media.revert();
   }, []);
 
   return <svg ref={root} className="events-quill-scene" aria-hidden="true" focusable="false" preserveAspectRatio="none">
-    <path ref={approachRef} fill="none" stroke="none"/>
-    <path ref={strokeRef} className="events-quill-stroke" pathLength="1" strokeDasharray="1" strokeDashoffset="1"/>
+    <defs>
+      <radialGradient id={`${id}-pool`}>
+        <stop offset="0" stopColor="white" />
+        <stop offset=".68" stopColor="white" />
+        <stop offset="1" stopColor="white" stopOpacity="0" />
+      </radialGradient>
+      {artwork.glyphs.map((glyph, index) => {
+        const [x, y, width, height] = glyph.bounds;
+        return <g key={index}>
+          <filter id={`${id}-grain-${index}`} filterUnits="userSpaceOnUse" x={x - 8} y={y - 8} width={width + 16} height={height + 16} colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency=".045 .075" numOctaves="2" seed={index % 7 + 1} result="grain" />
+            <feDisplacementMap in="SourceGraphic" in2="grain" scale="5" xChannelSelector="R" yChannelSelector="G" />
+            <feGaussianBlur stdDeviation=".55" />
+          </filter>
+          <mask data-ink-mask id={`${id}-ink-${index}`} maskUnits="userSpaceOnUse" x={x - 8} y={y - 8} width={width + 16} height={height + 16}>
+            <g data-ink-pools filter={`url(#${id}-grain-${index})`}>
+              {pools.map((_, seed) => <circle key={seed} r="0" fill={`url(#${id}-pool)`} />)}
+            </g>
+            <rect data-ink-settled x={x - 8} y={y - 8} width={width + 16} height={height + 16} fill="white" style={{ display: 'none' }} />
+          </mask>
+        </g>;
+      })}
+    </defs>
+    <path ref={trailRef} className="events-quill-trail" d={flourish} pathLength="1" strokeDasharray="1" strokeDashoffset="1" />
+    <g ref={letteringRef} className="events-quill-lettering">
+      {artwork.glyphs.map((glyph, index) => <path className="events-quill-ink" key={index} d={glyph.d} mask={`url(#${id}-ink-${index})`} />)}
+    </g>
     <g ref={penRef} className="events-quill-pen">
-      <image href={quill} x="-18" y="-542" width="320" height="560"/>
+      <image href={quill} x="-18" y="-542" width="320" height="560" />
     </g>
   </svg>;
 }

@@ -195,7 +195,7 @@ export default function EventsPage() {
       <div className="mx-auto w-full max-w-[min(92vw,87.5rem)]">
         <EventsTitle/>
 
-        <div className="flex flex-col gap-16 max-[56.25rem]:gap-12 max-sm:gap-9">
+        <div className="events-cards flex flex-col gap-16 max-[56.25rem]:gap-12 max-sm:gap-9">
           {events.map((event, index) => {
             const reverse = index % 2 === 1;
             const parallaxRef = parallaxRefs[index];

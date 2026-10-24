@@ -1,0 +1,22 @@
+.stem-globe-journey { position: relative; isolation: isolate; background: #fff9e9; }
+/* Keep the title's parchment and vignette behind the entire globe journey. */
+.stem-journey-paper {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  z-index: -1;
+  pointer-events: none;
+}
+.stem-globe-journey > .stem-shared-globe {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  padding: 0;
+  z-index: 1;
+}
+.stem-globe-intro, .stem-shared-globe .globe-stage { display: grid; place-items: center; }
+.stem-globe-journey > #title-card-section { position: relative; z-index: 0; }
+.stem-globe-journey > #women-in-stem { position: relative; z-index: 2; }
+.stem-globe-journey .women-in-stem { background: transparent; }

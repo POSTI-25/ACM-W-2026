@@ -1,5 +1,5 @@
-.events-intro { position: relative; padding-bottom: 5rem; }
-.events-title { --dial-row: 1.24em; --title-tracking: .06em; margin: 0; color: #5b0f0f; font-family: Kovanov, Georgia, serif; font-size: clamp(4rem, 6.8vw, 5rem); font-weight: 700; line-height: 1.24; text-align: center; -webkit-text-stroke: .005em currentColor; }
+.events-intro { position: relative; padding-bottom: 2rem; }
+.events-title { --dial-row: 1.24em; --title-tracking: .025em; margin: 0; color: #5b0f0f; font-family: Kovanov, Georgia, serif; font-size: clamp(5rem, 18vw, 15.5rem); font-weight: 700; line-height: 1.24; text-align: center; -webkit-text-stroke: .018em currentColor; }
 .events-title-word { display: inline-flex; align-items: flex-start; gap: var(--title-tracking); vertical-align: top; }
 .events-title-static { display: inline-flex; gap: var(--title-tracking); height: var(--dial-row); }
 .events-title-dial { position: relative; display: block; height: var(--dial-row); overflow: hidden; overflow: clip; contain: paint; }
@@ -9,5 +9,4 @@
 .events-title-face--modern { font-family: Quicksand, Arial, sans-serif; font-weight: 400; opacity: 0; transform: scaleX(.9); }
 .events-title-face--serif { font-family: Georgia, serif; font-weight: 400; font-style: italic; opacity: 0; }
 .events-title-face--ornate { font-family: Kovanov, Georgia, serif; font-weight: 700; opacity: 1; }
-@media (max-width: 56.25rem) { .events-intro { padding-bottom: clamp(8.5rem, 18vw, 11rem); } }
-@media (max-width: 40rem) { .events-title { font-size: clamp(3.5rem, 16vw, 4.5rem); } }
+@media (max-width: 40rem) { .events-title { font-size: clamp(3.25rem, 18vw, 7.25rem); } }

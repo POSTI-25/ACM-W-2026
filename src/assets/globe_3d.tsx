@@ -10,6 +10,8 @@ export type Globe3DHandle = {
   setAutoRotate: (enabled: boolean) => void;
   /** Toggle pointer-drag rotation on/off */
   setDragEnabled: (enabled: boolean) => void;
+  setCountryHighlight: (countryId: string | null) => void;
+  countryBounds: (countryId: string) => { x: number; y: number; width: number; height: number } | undefined;
 };
 
 type Globe3DProps = {
@@ -29,6 +31,8 @@ type GlobeInternals = {
   camera?: THREE.PerspectiveCamera;
   renderer?: THREE.WebGLRenderer;
   scene?: THREE.Scene;
+  highlightCountry?: (countryId: string | null) => void;
+  countryBounds?: Globe3DHandle['countryBounds'];
 };
 
 type GeoGeometry = {
@@ -36,12 +40,7 @@ type GeoGeometry = {
   coordinates: number[][][] | number[][][][];
 };
 
-type TopoJsonApi = {
-  feature: (
-    world: { objects: { countries: unknown } },
-    countries: unknown,
-  ) => { features: Array<{ geometry: GeoGeometry }> };
-};
+type GeoFeature = { id: string; geometry: GeoGeometry };
 
 const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
   {
@@ -62,6 +61,7 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
   const internals = useRef<GlobeInternals>({});
   const autoRotateRef = useRef(true);
   const dragEnabledRef = useRef(enableDrag);
+  const highlightedRef = useRef<string | null>(null);
 
   // Keep dragEnabledRef in sync with prop
   useEffect(() => {
@@ -80,6 +80,14 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
     },
     setDragEnabled(enabled: boolean) {
       dragEnabledRef.current = enabled;
+    },
+    setCountryHighlight(countryId: string | null) {
+      if (highlightedRef.current === countryId) return;
+      highlightedRef.current = countryId;
+      internals.current.highlightCountry?.(countryId);
+    },
+    countryBounds(countryId: string) {
+      return internals.current.countryBounds?.(countryId);
     },
   }));
 
@@ -107,8 +115,8 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
      * on every side and eliminating the rectangular-clipping artifact.
      */
     /*
-     * near = 0.1, not 0.01: the closest the camera ever gets is z 1.3 (the
-     * country zoom-in), where the nearest geometry sits at ~0.28, so 0.1 is
+     * near = 0.1, not 0.01: the closest the camera gets is z 2.75 (the
+     * gentle country zoom), leaving ample clearance from the surface. 0.1 is
      * still a comfortable margin — and it buys ~10x the depth-buffer precision,
      * which is what keeps the country lines from sparkling against the sphere
      * when zoomed in.
@@ -183,11 +191,11 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
        makes lines flicker in and out at grazing angles. */
     const lineRadius = radius * 1.002;
 
-    function pushVertex(lat: number, lng: number) {
+    function pushVertex(lat: number, lng: number, positions = linePositions) {
       const phi = ((90 - lat) * Math.PI) / 180;
       const theta = ((lng + 180) * Math.PI) / 180;
       const sinPhi = Math.sin(phi);
-      linePositions.push(
+      positions.push(
         -lineRadius * sinPhi * Math.cos(theta),
         lineRadius * Math.cos(phi),
         lineRadius * sinPhi * Math.sin(theta),
@@ -212,56 +220,119 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
       }
     }
 
-    // Load world topology. The effect can be torn down before this resolves,
-    // so nothing is added to the scene after `disposed` flips.
+    // Fine meridians keep the spherical turn legible even over open oceans.
+    // One shared buffer adds only one draw call per globe.
+    const gridPositions: number[] = [];
+    for (let lat = -60; lat <= 60; lat += 30) {
+      for (let lng = -180; lng < 180; lng += 3) {
+        pushVertex(lat, lng, gridPositions);
+        pushVertex(lat, lng + 3, gridPositions);
+      }
+    }
+    for (let lng = -180; lng < 180; lng += 30) {
+      for (let lat = -90; lat < 90; lat += 3) {
+        pushVertex(lat, lng, gridPositions);
+        pushVertex(lat + 3, lng, gridPositions);
+      }
+    }
+    const gridGeometry = new THREE.BufferGeometry();
+    gridGeometry.setAttribute('position', new THREE.Float32BufferAttribute(gridPositions, 3));
+    const gridMaterial = new THREE.LineBasicMaterial({
+      color: new THREE.Color(lineColor), transparent: true, opacity: .18, depthWrite: false,
+    });
+    group.add(new THREE.LineSegments(gridGeometry, gridMaterial));
+
+    const countries = new Map<string, GeoGeometry>();
+    const polygons = (geometry: GeoGeometry): number[][][][] => geometry.type === 'Polygon'
+      ? [geometry.coordinates as number[][][]] : geometry.coordinates as number[][][][];
+    const geographicPoint = (lng: number, lat: number) => {
+      const phi = lat * Math.PI / 180, theta = lng * Math.PI / 180;
+      return new THREE.Vector3(Math.cos(phi) * Math.cos(theta), Math.sin(phi), -Math.cos(phi) * Math.sin(theta));
+    };
+    let highlightTexture: THREE.CanvasTexture | undefined;
+    let highlightGeometry: THREE.SphereGeometry | undefined;
+    let highlightMaterial: THREE.MeshBasicMaterial | undefined;
+    let highlightCanvas: HTMLCanvasElement | undefined;
+    const highlightCountry = (countryId: string | null) => {
+      if (!highlightCanvas && !countryId) return;
+      if (!highlightCanvas) {
+        highlightCanvas = document.createElement('canvas');
+        highlightCanvas.width = 2048;
+        highlightCanvas.height = 1024;
+        highlightTexture = new THREE.CanvasTexture(highlightCanvas);
+        highlightTexture.colorSpace = THREE.SRGBColorSpace;
+        highlightGeometry = new THREE.SphereGeometry(radius * 1.006, 128, 64);
+        highlightMaterial = new THREE.MeshBasicMaterial({
+          map: highlightTexture, transparent: true, alphaTest: .01, depthWrite: false,
+        });
+        group.add(new THREE.Mesh(highlightGeometry, highlightMaterial));
+      }
+      const context = highlightCanvas.getContext('2d');
+      if (!context) return;
+      const w = highlightCanvas.width, h = highlightCanvas.height;
+      context.clearRect(0, 0, w, h);
+      const geometry = countryId ? countries.get(countryId) : undefined;
+      if (geometry) {
+        context.fillStyle = '#812633';
+        context.strokeStyle = '#a54a54';
+        context.lineWidth = 1.5;
+        for (const polygon of polygons(geometry)) {
+          for (const shift of [-w, 0, w]) {
+            context.beginPath();
+            for (const ring of polygon) {
+              let previous = ring[0][0];
+              ring.forEach(([longitude, latitude], index) => {
+                let lng = longitude;
+                while (lng - previous > 180) lng -= 360;
+                while (lng - previous < -180) lng += 360;
+                previous = lng;
+                const x = (lng + 180) / 360 * w + shift;
+                const y = (90 - latitude) / 180 * h;
+                if (index) context.lineTo(x, y); else context.moveTo(x, y);
+              });
+              context.closePath();
+            }
+            context.fill('evenodd');
+            context.stroke();
+          }
+        }
+      }
+      highlightTexture!.needsUpdate = true;
+    };
+    const countryBounds: Globe3DHandle['countryBounds'] = countryId => {
+      const geometry = countries.get(countryId);
+      if (!geometry) return undefined;
+      group.updateMatrixWorld(true);
+      camera.updateMatrixWorld();
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const polygon of polygons(geometry)) for (const ring of polygon) for (const [lng, lat] of ring) {
+        const point = geographicPoint(lng, lat).applyMatrix4(group.matrixWorld);
+        if (point.z <= 0) continue;
+        point.project(camera);
+        const x = (point.x + 1) / 2, y = (1 - point.y) / 2;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+      return Number.isFinite(minX) ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY } : undefined;
+    };
+
+    // Bundled Natural Earth geometry works without runtime CDN scripts or requests.
     let disposed = false;
     let lineGeometry: THREE.BufferGeometry | undefined;
-    let fallbackGeometry: THREE.WireframeGeometry | undefined;
-    let fallbackMat: THREE.LineBasicMaterial | undefined;
-
     void (async () => {
       try {
-        const [topoSrc, world] = await Promise.all([
-          fetch(
-            "https://unpkg.com/topojson-client@3/dist/topojson-client.min.js",
-          ).then((r) => r.text()),
-          fetch("https://unpkg.com/world-atlas@2/countries-110m.json").then(
-            (r) => r.json(),
-          ),
-        ]);
-
-        const topoModule = { exports: {} };
-        new Function("module", "exports", topoSrc)(
-          topoModule,
-          topoModule.exports,
-        );
-
-        const topojson = topoModule.exports as TopoJsonApi;
-        topojson
-          .feature(world, world.objects.countries)
-          .features.forEach((f) => addFeature(f.geometry));
-
-        if (disposed || !linePositions.length) return;
-
-        lineGeometry = new THREE.BufferGeometry();
-        lineGeometry.setAttribute(
-          "position",
-          new THREE.Float32BufferAttribute(linePositions, 3),
-        );
-        group.add(new THREE.LineSegments(lineGeometry, lineMat));
-      } catch {
+        const world = (await import('./globe/countries-110m.geo.json')).default as { features: GeoFeature[] };
         if (disposed) return;
-
-        // Fallback: wireframe sphere
-        const fallbackSphere = new THREE.SphereGeometry(radius, 32, 32);
-        fallbackGeometry = new THREE.WireframeGeometry(fallbackSphere);
-        fallbackSphere.dispose();
-        fallbackMat = new THREE.LineBasicMaterial({
-          color: new THREE.Color(lineColor),
-          opacity: 0.15,
-          transparent: true,
-        });
-        group.add(new THREE.LineSegments(fallbackGeometry, fallbackMat));
+        for (const feature of world.features) {
+          countries.set(feature.id, feature.geometry);
+          addFeature(feature.geometry);
+        }
+        lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+        group.add(new THREE.LineSegments(lineGeometry, lineMat));
+        highlightCountry(highlightedRef.current);
+      } catch {
+        // The locally generated graticule remains a usable globe if a chunk fails.
       }
     })();
 
@@ -304,24 +375,35 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
     canvas.addEventListener("pointercancel", onPointerUp);
 
     /* ─── Render loop ─── */
-    function animate() {
+    let previousTime = 0;
+    let inView = false;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const visibility = new IntersectionObserver(entries => {
+      inView = entries.some(entry => entry.isIntersecting);
+    }, { rootMargin: '160px' });
+    visibility.observe(container);
+    function animate(time: number) {
       animationId = requestAnimationFrame(animate);
+      const delta = previousTime ? Math.min((time - previousTime) / 1000, .05) : 0;
+      previousTime = time;
+      if (!inView || document.hidden) return;
 
-      // Auto-rotate only when enabled and not dragging
-      if (!isDragging && autoRotateRef.current) {
-        group.rotation.y += rotationSpeed;
+      // Keep the same gentle speed on 60Hz and high-refresh-rate screens.
+      if (!isDragging && autoRotateRef.current && !reducedMotion.matches) {
+        group.rotation.y += rotationSpeed * delta * 60;
       }
 
       renderer.render(scene, camera);
     }
 
-    animate();
+    animationId = requestAnimationFrame(animate);
 
-    internals.current = { group, camera, renderer, scene };
+    internals.current = { group, camera, renderer, scene, highlightCountry, countryBounds };
 
     return () => {
       disposed = true;
       cancelAnimationFrame(animationId);
+      visibility.disconnect();
       resizeObserver.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
@@ -331,9 +413,13 @@ const Globe3D = forwardRef<Globe3DHandle, Globe3DProps>(function Globe3D(
       sphereGeometry.dispose();
       rimGeometry.dispose();
       lineMat.dispose();
+      gridGeometry.dispose();
+      gridMaterial.dispose();
       lineGeometry?.dispose();
-      fallbackGeometry?.dispose();
-      fallbackMat?.dispose();
+      highlightGeometry?.dispose();
+      highlightMaterial?.dispose();
+      highlightTexture?.dispose();
+      internals.current = {};
     };
   }, [initialRotX, initialRotY, lineColor, rotationSpeed, size, sphereColor]);
 

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { floatPostcard } from '../lib/postcardFloat'
 import aboutAcmWImg from '../assets/about/about-acm-w.svg'
 import aboutAcmVitImg from '../assets/about/about-acm-vit.svg'
 import './About.css'
@@ -68,28 +69,7 @@ export default function About() {
         })
       })
       element.querySelectorAll<HTMLElement>('.about_card-wrap').forEach((card, index) => {
-        // Both photos share one scroll range; the foreground postcard travels
-        // farther, like the overlapping archival photos in the reference.
-        gsap.fromTo(card, {
-          y: () => window.innerHeight * (index === 0 ? (compact ? .2 : .35) : (compact ? .5 : .9)),
-          x: 0,
-          rotation: 0,
-        }, {
-          y: () => -window.innerHeight * (index === 0 ? (compact ? .14 : .24) : (compact ? .28 : .42)),
-          x: () => (index === 0 ? -1 : 1) * window.innerWidth * (compact ? .004 : .008),
-          rotation: index === 0 ? -1.5 : 1.5,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: element,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1,
-            invalidateOnRefresh: true,
-            onToggle: self => {
-              card.style.willChange = self.isActive ? 'transform' : 'auto'
-            },
-          },
-        })
+        floatPostcard(card, element, { compact, foreground: index === 1 })
       })
       return () => {
         element.querySelectorAll<HTMLElement>('.about_card-wrap').forEach(card => {

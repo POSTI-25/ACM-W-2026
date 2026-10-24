@@ -2,7 +2,9 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  padding-top: clamp(3rem, 8vh, 5rem);
+  padding-top: 0;
+  /* Keep the top seam filled while the banner drifts by +/-3px. */
+  background: linear-gradient(#b49880, #b49880) top / 100% 6px no-repeat;
   padding-bottom: clamp(6rem, 16vh, 10rem);
   overflow: clip;
 }

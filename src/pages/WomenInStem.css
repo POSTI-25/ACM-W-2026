@@ -1,0 +1,60 @@
+/* One clipped viewport keeps every lift independent of a sticky release. */
+.women-in-stem--sequence {
+  height: calc((var(--scientist-count) * var(--chapter-screens) + 1) * 100svh);
+  overflow: visible;
+}
+.women-in-stem--sequence .scientist-viewport {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: clip;
+  isolation: isolate;
+}
+.women-in-stem--sequence .globe-sticky-container {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 1;
+  will-change: auto;
+}
+.women-in-stem--sequence .scientist-section {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+.scientist-country-position,
+.scientist-portrait-position {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+.scientist-country-position { visibility: hidden; z-index: 1; }
+.scientist-portrait-position { z-index: 2; }
+.scientist-portrait-image,
+.scientist-country-art { display: block; width: 100%; height: auto; }
+.scientist-country-art {
+  filter: brightness(0) saturate(100%) invert(16%) sepia(37%) saturate(2613%) hue-rotate(317deg) brightness(91%) contrast(94%);
+}
+.women-in-stem--sequence .scientist-text { z-index: 3; pointer-events: auto; }
+.scientist-air {
+  animation: scientist-air 5.8s ease-in-out infinite;
+  animation-play-state: paused;
+  transform-origin: center;
+}
+.scientist-air--country { animation-duration: 7.2s; animation-delay: -1.2s; }
+@keyframes scientist-air {
+  0%, 100% { transform: translateY(3px) rotate(-.25deg); }
+  50% { transform: translateY(-4px) rotate(.25deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .women-in-stem--sequence { height: auto; }
+  .women-in-stem--sequence .scientist-viewport { position: relative; height: auto; }
+  .women-in-stem--sequence .globe-sticky-container { position: sticky; height: 100svh; margin-bottom: -100svh; }
+  .women-in-stem--sequence .scientist-section { position: relative; inset: auto; height: 100svh; }
+  .scientist-air { animation: none; }
+}

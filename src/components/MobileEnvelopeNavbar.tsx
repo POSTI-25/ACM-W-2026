@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
-import closedEnv from "../assets/closed.svg";
-import openEnv from "../assets/open.svg";
+import NavbarEnvelope from "./NavbarEnvelope";
 import "./MobileEnvelopeNavbar.css";
 
 const navItems = [
@@ -91,7 +90,7 @@ export default function MobileEnvelopeNavbar() {
         tabIndex={isVisible ? 0 : -1}
         onClick={() => setIsOpen((current) => !current)}
       >
-        <img src={isOpen ? openEnv : closedEnv} alt="" />
+        <NavbarEnvelope isOpen={isOpen} />
       </button>
 
       <div

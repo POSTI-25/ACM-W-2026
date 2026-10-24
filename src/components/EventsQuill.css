@@ -1,6 +1,27 @@
-.events-quill-scene { position: absolute; left: 0; width: 100%; height: 460px; overflow: visible; pointer-events: none; }
-.events-quill-stroke { fill: none; stroke: #080808; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; opacity: .82; }
-.events-quill-pen { opacity: 0; transform-origin: 0 0; transform-box: view-box; }
-@media (max-width: 48rem) {
-  .events-quill-stroke { stroke-width: 1.65; }
+.events-quill-scene {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  pointer-events: none;
 }
+.events-quill-lettering { opacity: .5; }
+/* Ink pools develop into a fine engraved edge with translucent pigment. */
+.events-quill-ink {
+  fill: #64262a;
+  fill-opacity: .3;
+  stroke: #64262a;
+  stroke-width: 1;
+  stroke-opacity: .8;
+  stroke-linejoin: round;
+}
+.events-quill-trail {
+  fill: none;
+  stroke: #80514c;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+}
+.events-quill-pen { opacity: 0; }

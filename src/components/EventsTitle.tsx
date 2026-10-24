@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './EventsTitle.css';
 
 gsap.registerPlugin(ScrollTrigger);
-const DIALS = [{ letter: 'N', width: '.74em' }, { letter: 'T', width: '.66em' }, { letter: 'S', width: '.65em' }];
+const DIALS = [{ letter: 'N', width: '.80em' }, { letter: 'T', width: '.74em' }, { letter: 'S', width: '.72em' }];
 
 /** Three independent mechanical dials; fixed cells prevent font-induced layout shifts. */
 export default function EventsTitle() {
@@ -63,5 +63,6 @@ export default function EventsTitle() {
         </span>)}
       </span>
     </h1>
+    <p className="sr-only">little sparks, limitless dreams</p>
   </header>;
 }

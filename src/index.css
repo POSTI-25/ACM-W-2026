@@ -139,22 +139,10 @@ body {
   );
 }
 
-/* Each scientist is a 160svh block in document flow; its 100svh stage sticks
-   to the top of the viewport for the middle ~60svh so the scene holds still
-   while it's centred. Purely CSS — no pin-spacers, no layout shift. */
+/* Shared scientist styling; scene positioning lives in WomenInStem.css. */
 .scientist-section {
-  position: relative;
   z-index: 1;
   width: 100%;
-  height: 160svh;
-}
-
-.scientist-stage {
-  position: sticky;
-  top: 0;
-  width: 100%;
-  height: 100svh;
-  overflow: hidden;
 }
 
 /* ─── Photo (no frame) ─── */
