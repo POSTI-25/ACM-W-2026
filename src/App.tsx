@@ -11,6 +11,7 @@ import BestChapter from "./pages/BestChapter";
 import TeamPage from "./pages/TeamPage";
 import WomenJourney from "./components/WomenJourney";
 import Footer from "./components/Footer";
+import SectionColorFan from "./components/SectionColorFan";
 import ChapterJourney, { ChapterTrail } from "./components/ChapterJourney";
 
 import "./App.css";
@@ -91,10 +92,12 @@ export default function App() {
         <BestChapter />
       </section>
 
-      <ChapterTrail />
-      <section id="blogs">
-        <BlogStamps />
-      </section>
+      <SectionColorFan>
+        <ChapterTrail />
+        <section id="blogs">
+          <BlogStamps />
+        </section>
+      </SectionColorFan>
 
       <WomenJourney />
 

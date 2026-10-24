@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { postcardMotion } from "../lib/postcardFloat";
 import { type Globe3DHandle } from "../assets/globe_3d";
-import { countrySpin, stemSceneAt, STEM_CHAPTER_SCREENS, STEM_PHASE as P } from "../lib/stemSequence";
+import { countryExitY, countrySpin, stemSceneAt, STEM_CHAPTER_SCREENS, STEM_PHASE as P } from "../lib/stemSequence";
 import india from "../assets/IN.png";
 import poland from "../assets/PL.png";
 import uk from "../assets/GB.png";
@@ -230,11 +230,15 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
           y: () => innerHeight * travelEnd, duration, ease: "none",
         }, at(P.mapEnd));
         timeline.to(country, {
-          y: () => countryY() + innerHeight * (last ? -.15 : -.85),
+          y: () => last ? countryY() - innerHeight * .15
+            : countryExitY(viewport.clientHeight, country.offsetWidth, country.offsetHeight,
+              mobile ? .75 : 1, countryY()),
           x: () => countryX() + innerWidth * background.xDrift,
           rotation: -2 + background.rotationDrift,
           duration, ease: "none",
         }, at(P.mapEnd));
+        // This visibility switch happens after the full upward exit, never as a fade.
+        if (!last) timeline.set(country, { visibility: "hidden" }, at(P.exitEnd));
         previousY = turn.toY;
         previousTilt = turn.tilt;
       });

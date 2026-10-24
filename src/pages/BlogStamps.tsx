@@ -4,6 +4,7 @@ import leftArr from "../assets/leftArr.png";
 import rightArr from "../assets/rightArr.png";
 import { blogs } from "../data/blogs";
 import BlogStampRoll from "./BlogStampRoll";
+import { RollingSectionTitle } from "../components/EventsTitle";
 import StampBorder from "../components/StampBorder";
 
 const SPREAD = 90;
@@ -56,12 +57,29 @@ function BlogStampsDesktop() {
   const cardH = cardW * 1.25;
   const fanSpacing = viewport.w * 0.145;
   const fanDrop = viewport.h * 0.025;
-  const fanBaseOffset = viewport.h * 0.035;
-  const baseSpan = cardW + fanSpacing * (n - 1);
-  const scale = Math.max(0.6, Math.min(1.2, (viewport.w * 0.97) / baseSpan));
-  const fanHeight = Math.max(viewport.h * 0.32, Math.min(viewport.h * 0.6, cardH * 1.9 * scale));
-  const fanTop = viewport.h - fanHeight - fanBaseOffset;
-  const headingTop = Math.max(viewport.h * 0.03, fanTop / 2);
+  // Measure the rotated corners, including the lowest outer stamp corners.
+  // The old bottom anchor sat below the section and cropped the whole fan.
+  const corners = Array.from({ length: n }, (_, slot) => {
+    const offset = slot - Math.floor(n / 2);
+    const angle = (-SPREAD / 2 + slot * (n > 1 ? SPREAD / (n - 1) : 0)) * Math.PI / 180;
+    return [-cardW / 2, cardW / 2].flatMap(x => [-cardH, 0].map(y => ({
+      x: offset * fanSpacing + x * Math.cos(angle) - y * Math.sin(angle),
+      y: Math.abs(offset) * fanDrop + x * Math.sin(angle) + y * Math.cos(angle),
+    })));
+  }).flat();
+  const minX = Math.min(...corners.map(p => p.x));
+  const maxX = Math.max(...corners.map(p => p.x));
+  const minY = Math.min(...corners.map(p => p.y));
+  const maxY = Math.max(...corners.map(p => p.y));
+  const bottomPadding = Math.max(32, viewport.h * .045);
+  const headingFontSize = Math.max(80, Math.min(viewport.w * .18, 248));
+  const headingSpace = headingFontSize * 1.24 + 110;
+  const sidePadding = Math.max(64, viewport.w * .045);
+  const scale = Math.min(1.2, (viewport.w - sidePadding * 2) / (maxX - minX));
+  const fanHeight = (maxY - minY) * scale;
+  const fanAnchorBottom = bottomPadding + maxY * scale;
+  const sectionHeight = Math.max(viewport.h, headingSpace + fanHeight + bottomPadding);
+  const headingTop = 20;
   const contentScale = Math.max(0.75, Math.min(1, scale));
   const imageHeight = Math.round(cardH * 0.5 * contentScale);
   const titleSize = 14 * contentScale;
@@ -145,7 +163,7 @@ function BlogStampsDesktop() {
     const maxScaleH = (viewport.h * 0.72) / (cardH * scale);
     const targetScale = Math.max(1, Math.min(1.4, maxScaleW, maxScaleH));
     const targetY =
-      (cardH * targetScale - viewport.h / scale) / 2;
+      (cardH * targetScale - sectionHeight / scale) / 2 + fanAnchorBottom / scale;
     gsap.to(el, {
       x: 0,
       y: targetY,
@@ -308,7 +326,7 @@ function BlogStampsDesktop() {
       style={{
         width: "100%",
         minHeight: "100svh",
-        height: "100svh",
+        height: sectionHeight,
         background: "#FFF9E9",
         fontFamily: "'Georgia', serif",
         position: "relative",
@@ -337,23 +355,13 @@ function BlogStampsDesktop() {
           pointerEvents: "none",
         }}
       >
-        <h2
-          style={{
-            fontSize: "clamp(2.5rem, 4vw, 3.125rem)",
-            fontFamily: "Kovanov, Georgia, serif",
-            color: "#580a0a",
-            letterSpacing: "0.015em",
-            fontWeight: "bold",
-            lineHeight: "normal",
-            textTransform: "uppercase",
-            margin: 0,
-            filter: activeIdx !== null ? "blur(6px)" : "none",
-            opacity: activeIdx !== null ? 0.35 : 1,
-            transition: "filter 0.25s ease, opacity 0.25s ease",
-          }}
-        >
-          Blogs
-        </h2>
+        <div style={{
+          filter: activeIdx !== null ? "blur(6px)" : "none",
+          opacity: activeIdx !== null ? .35 : 1,
+          transition: "filter .25s ease, opacity .25s ease",
+        }}>
+          <RollingSectionTitle word="BLOGS" sectionId="blogs" staticLetters={2} as="h2" />
+        </div>
         <p
           key={activeIdx === null ? hint : "zoomed"}
           style={{
@@ -487,7 +495,7 @@ function BlogStampsDesktop() {
       <div
         style={{
           position: "absolute",
-          bottom: -fanBaseOffset,
+          bottom: fanAnchorBottom,
           left: 0,
           right: 0,
           height: fanHeight,

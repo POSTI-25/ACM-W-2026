@@ -4,15 +4,21 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './EventsTitle.css';
 
 gsap.registerPlugin(ScrollTrigger);
-const DIALS = [{ letter: 'N', width: '.80em' }, { letter: 'T', width: '.74em' }, { letter: 'S', width: '.72em' }];
+const LETTER_WIDTH: Record<string, string> = { N: '.80em', T: '.74em', S: '.72em', O: '.82em', G: '.82em' };
 
 /** Three independent mechanical dials; fixed cells prevent font-induced layout shifts. */
-export default function EventsTitle() {
+export function RollingSectionTitle({ word, sectionId, staticLetters = 3, as: Heading = 'h1', description }: {
+  word: string;
+  sectionId: string;
+  staticLetters?: number;
+  as?: 'h1' | 'h2';
+  description?: string;
+}) {
   const root = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
     const intro = root.current;
-    const events = intro?.closest('#events');
+    const events = intro?.closest(`#${sectionId}`);
     if (!intro || !events) return;
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
@@ -45,14 +51,14 @@ export default function EventsTitle() {
       return () => intro.querySelectorAll<HTMLElement>('[data-dial-track]').forEach(track => track.style.removeProperty('will-change'));
     }, intro);
     return () => media.revert();
-  }, []);
+  }, [word, sectionId, staticLetters]);
 
   return <header ref={root} className="events-intro">
-    <h1 className="events-title" data-events-title>
-      <span className="sr-only">EVENTS</span>
+    <Heading className="events-title" data-events-title>
+      <span className="sr-only">{word}</span>
       <span className="events-title-word" aria-hidden="true">
-        <span className="events-title-static">{'EVE'.split('').map((letter, index) => <span key={index}>{letter}</span>)}</span>
-        {DIALS.map(({ letter, width }) => <span className="events-title-dial" data-dial key={letter} style={{ width }}>
+        <span className="events-title-static">{word.slice(0, staticLetters).split('').map((letter, index) => <span key={index}>{letter}</span>)}</span>
+        {word.slice(staticLetters).split('').map((letter, index) => <span className="events-title-dial" data-dial key={`${letter}-${index}`} style={{ width: LETTER_WIDTH[letter] ?? '.8em' }}>
           <span className="events-title-track" data-dial-track>
             {[0, 1, 2, 3].map(row => <span className="events-title-row" key={row}>
               <span className="events-title-face events-title-face--modern" data-face="modern">{letter}</span>
@@ -62,7 +68,11 @@ export default function EventsTitle() {
           </span>
         </span>)}
       </span>
-    </h1>
-    <p className="sr-only">little sparks, limitless dreams</p>
+    </Heading>
+    {description && <p className="sr-only">{description}</p>}
   </header>;
+}
+
+export default function EventsTitle() {
+  return <RollingSectionTitle word="EVENTS" sectionId="events" description="little sparks, limitless dreams" />;
 }

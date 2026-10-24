@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { countrySpin, stemSceneAt, STEM_PHASE as P } from '../src/lib/stemSequence.ts';
+import { countryExitY, countrySpin, stemSceneAt, STEM_PHASE as P } from '../src/lib/stemSequence.ts';
 
 const countries = [[79,22],[20,52],[-2,54],[14,47.5],[-98,39]];
 
@@ -37,4 +37,17 @@ test('forward and reverse chapter boundaries select the correct scientist', () =
   assert.equal(stemSceneAt(.999,5).index,0);
   assert.deepEqual(stemSceneAt(5,5),{index:4,progress:1});
   assert.deepEqual(stemSceneAt(-1,5),{index:0,progress:0});
+});
+
+test('tall UK map clears the viewport before the next country, including short screens', () => {
+  for (const viewportHeight of [480, 604, 800, 1080]) {
+    for (const scale of [.75, 1]) {
+      const width = 400, height = width * 775 / 458;
+      const y = countryExitY(viewportHeight, width, height, scale, -viewportHeight * .035);
+      const angle = 4 * Math.PI / 180;
+      const bottom = viewportHeight / 2 + y
+        + (height * Math.cos(angle) + width * Math.sin(angle)) * scale / 2;
+      assert.ok(bottom <= -23.99, `UK map must clear the top edge at ${viewportHeight}px`);
+    }
+  }
 });

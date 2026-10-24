@@ -22,3 +22,10 @@ export function stemSceneAt(time: number, count: number) {
   const index = Math.min(count - 1, Math.max(0, Math.floor(time)));
   return { index, progress: Math.min(1, Math.max(0, time - index)) };
 }
+
+/** Clear the top edge even for tall cutouts such as the United Kingdom. */
+export function countryExitY(viewportHeight: number, width: number, height: number, scale: number, restingY: number) {
+  const angle = 4 * Math.PI / 180;
+  const halfHeight = (height * Math.cos(angle) + width * Math.sin(angle)) * scale / 2;
+  return Math.min(restingY - viewportHeight * .85, -viewportHeight / 2 - halfHeight - 24);
+}

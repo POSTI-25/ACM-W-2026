@@ -53,3 +53,34 @@
   .journey-color-anchor { display: none; }
   .chapter-journey #events { background: #f2e8cf; }
 }
+
+/* Blogs reprises Events' three-circle sweep behind its heading and stamp fan. */
+.section-color-fan {
+  position: relative;
+  isolation: isolate;
+  background: #fff9e9;
+  --journey-portal-y: 24vh;
+  --journey-diameter: 1600px;
+}
+.section-color-fan-backdrop { position: absolute; inset: 0; z-index: 0; overflow: clip; pointer-events: none; }
+.section-color-fan > #blogs, .section-color-fan > .chapter-trail { position: relative; z-index: 1; }
+.section-color-fan #blogs > div { background-color: transparent !important; }
+@media (prefers-reduced-motion: reduce) {
+  .section-color-fan-backdrop .journey-color-anchor { display: none; }
+}
+
+.blog-transition-art { position: absolute; color: #64262a; pointer-events: none; transform-origin: center; }
+.blog-transition-art svg { display: block; width: 100%; height: auto; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.blog-transition-art--letter { top: calc(var(--blog-section-y) + 36px); left: -5%; width: clamp(230px, 30vw, 430px); opacity: .48; transform: rotate(-16deg); }
+.blog-transition-art--orbit { top: calc(var(--blog-section-y) + 25px); left: 36%; width: clamp(240px, 34vw, 480px); opacity: .36; transform: rotate(12deg); }
+.blog-transition-art--orbit text { fill: currentColor; stroke: none; font: 13px Quicksand, sans-serif; letter-spacing: 5px; }
+.blog-transition-art--quill { top: calc(var(--blog-section-y) - 55px); right: -1%; width: clamp(140px, 19vw, 270px); opacity: .64; transform: rotate(17deg); }
+.blog-transition-art--quill img { display: block; width: 100%; height: auto; }
+.blog-transition-art--plane { top: calc(var(--blog-section-y) + 290px); right: 5%; width: clamp(95px, 12vw, 175px); opacity: .56; transform: rotate(9deg); }
+.blog-transition-art--spark { top: calc(var(--blog-section-y) + 8px); left: 16%; width: clamp(65px, 9vw, 125px); opacity: .5; }
+@media (max-width: 48rem) {
+  .blog-transition-art--letter { left: -21%; width: 52vw; top: calc(var(--blog-section-y) + 34px); opacity: .33; }
+  .blog-transition-art--orbit { left: 25%; top: calc(var(--blog-section-y) - 15px); width: 65vw; opacity: .27; }
+  .blog-transition-art--quill { right: -9%; top: calc(var(--blog-section-y) - 16px); width: 29vw; opacity: .51; }
+  .blog-transition-art--plane { right: -2%; top: calc(var(--blog-section-y) + 145px); width: 22vw; opacity: .4; }
+}

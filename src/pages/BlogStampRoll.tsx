@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RollingSectionTitle } from "../components/EventsTitle";
 import StampBorder from "../components/StampBorder";
 import leftArr from "../assets/leftArr.png";
 import rightArr from "../assets/rightArr.png";
@@ -54,20 +55,7 @@ export default function BlogStampRoll() {
         fontFamily: "'Georgia', serif",
       }}
     >
-      <h2
-        style={{
-          fontFamily: "Kovanov, Georgia, serif",
-          color: "#580a0a",
-          letterSpacing: "0.015em",
-          fontWeight: "bold",
-          lineHeight: "normal",
-          textTransform: "uppercase",
-          fontSize: "clamp(2rem, 8vw, 2.4rem)",
-          marginBottom: "clamp(1rem, 3vh, 1.25rem)",
-        }}
-      >
-        Blogs
-      </h2>
+      <RollingSectionTitle word="BLOGS" sectionId="blogs" staticLetters={2} as="h2" />
 
       <div
         style={{

@@ -6,15 +6,15 @@ import EventsQuill from './EventsQuill';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function Plane() {
+export function Plane() {
   return <svg viewBox="0 0 220 180" fill="none"><path d="m16 72 187-51-66 141-35-62-86-28Zm86 28 101-79-79 99-22-20Zm22 20 13 42"/><path d="M21 139c28 21 60 14 62-3 3-22-40-24-40-1 0 28 54 39 82 23" strokeDasharray="3 6"/></svg>;
 }
 
-function Spark() {
+export function Spark() {
   return <svg viewBox="0 0 160 160" fill="none"><path d="M80 12c0 48-20 68-68 68 48 0 68 20 68 68 0-48 20-68 68-68-48 0-68-20-68-68Z"/><circle cx="80" cy="80" r="25"/><path d="m29 29 20 20m62 62 20 20M29 131l20-20m62-62 20-20"/></svg>;
 }
 
-function Orbit({ label = 'ACM-W · VIT · IDEAS IN MOTION' }: { label?: string }) {
+export function Orbit({ label = 'ACM-W · VIT · IDEAS IN MOTION' }: { label?: string }) {
   const id = useId().replace(/:/g, '');
   return <svg viewBox="0 0 500 500" fill="none">
     <defs><path id={id} d="M250 52a198 198 0 1 1-.1 0"/></defs>
@@ -25,7 +25,7 @@ function Orbit({ label = 'ACM-W · VIT · IDEAS IN MOTION' }: { label?: string }
   </svg>;
 }
 
-function SealedLetter() {
+export function SealedLetter() {
   return <svg viewBox="0 0 240 190" fill="none">
     <rect x="13" y="30" width="214" height="143" rx="5" fill="#fff9e9" fillOpacity=".3"/>
     <path d="m13 30 101 82q6 5 12 0l101-82M13 173l84-74m130 74-84-74"/>
