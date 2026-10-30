@@ -1,0 +1,51 @@
+.thread-intro {
+  --scene-width: min(88vw, 960px, 78svh);
+  position: relative; display: grid; place-items: center; isolation: isolate;
+  width: 100%; min-height: 520px; height: 100svh; overflow: hidden; color: #650e0c;
+  background: #fff9e9;
+}
+.thread-scene { position: relative; width: var(--scene-width); aspect-ratio: 600 / 500; perspective: 1500px; translate: 0 6svh; }
+.thread-shell { position: absolute; left: 7.5%; top: 14.4%; width: 85%; height: 65.2%; transform-origin: 50% 0; pointer-events: none; border-radius: 5px 5px 12px 12px; }
+.thread-wall { z-index: 1; background: url('../assets/footer/vintage-ivory-paper.webp') center / cover; border: 3px solid #5c170d; box-shadow: 0 12px 17px #542b193b, inset 0 0 25px #76401e66; }
+.thread-letter {
+  position: absolute; top: 16%; left: 15%; width: 70%; aspect-ratio: 1400 / 995;
+  z-index: 2; border-radius: 5px;
+  background: linear-gradient(105deg, #c4a37d28, transparent 48%, #a47a4526), url('../assets/footer/vintage-ivory-paper.webp') center / cover;
+  box-shadow: inset 0 0 24px #9d713329, inset 0 0 0 1px #a27c4933, 0 10px 30px #39201424;
+}
+.thread-pocket {
+  z-index: 3; background: url('../assets/footer/landing-engraved-burgundy.webp') center / 100% 100%;
+  clip-path: polygon(0 0, 50% 53.5%, 100% 0, 100% 100%, 0 100%);
+  box-shadow: inset 0 0 2px 1px #b77b46aa, inset 0 0 15px #2c080968;
+}
+.thread-flap-frame { z-index: 4; filter: drop-shadow(0 3px 2px #210504aa); transform-style: preserve-3d; }
+.thread-flap { position: absolute; inset: 0; transform-origin: 50% 0; clip-path: polygon(0 0, 100% 0, 51.4% 54.2%, 50% 55.2%, 48.6% 54.2%); }
+.thread-flap-outside {
+  background: linear-gradient(0deg, #27010522, #bb63412b), url('../assets/footer/landing-engraved-burgundy.webp') right top / 240% 220%;
+  box-shadow: inset 0 1px 2px #e0ae73bb;
+}
+.thread-flap-inside { opacity: 0; transform: rotateX(-90deg); background: url('../assets/footer/vintage-ivory-paper.webp') center / cover; box-shadow: inset 0 0 18px #a5743c66; }
+.thread-fold-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.thread-twine { position: absolute; top: 0; left: 0; display: block; width: 100%; height: auto; z-index: 5; overflow: visible; pointer-events: none; }
+.thread-rope-motion { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.thread-rope-motion--rear { z-index: 0; }
+.thread-pull {
+  position: absolute; inset: 0; z-index: 6; width: 100%; height: 100%;
+  margin: 0; display: block; padding: 0; border: 0;
+  background: transparent; cursor: grab; touch-action: none; user-select: none; pointer-events: none;
+}
+.thread-pull > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.thread-pull__targets { pointer-events: stroke; touch-action: none; }
+.thread-pull:disabled .thread-pull__targets { pointer-events: none; }
+.thread-pull__ring { stroke: #b2905a80; stroke-width: 1; transform-box: fill-box; transform-origin: center; animation: thread-invitation 2.5s ease-in-out infinite; }
+.thread-intro[data-dragging='true'] .thread-pull { cursor: grabbing; }
+.thread-intro[data-dragging='true'] .thread-pull__ring { animation: none; opacity: .25; }
+.thread-pull:focus-visible { outline: 2px solid #8c663b; outline-offset: 3px; }
+.thread-hint { position: absolute; top: calc(50% + 6svh + var(--scene-width) * .247 + 26px); display: flex; gap: 20px; align-items: center; font: clamp(18px, 2.5vw, 30px)/1.3 Georgia, serif; pointer-events: none; text-align: left; }
+.thread-hint__arrow { font-size: 1.2em; color: #967347; }
+.thread-hint small { display: block; margin-top: 7px; font: .58em/1.6 'Quicksand', Arial, sans-serif; opacity: .8; letter-spacing: .14em; }
+.thread-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes thread-invitation { 0%,100% { opacity: .15; scale: .82; } 50% { opacity: .6; scale: 1.08; } }
+@media(max-width: 600px) { .thread-intro { --scene-width: min(100vw, 78svh); } .thread-hint { gap: 12px; } }
+@media(max-height: 580px) and (min-width: 601px) { .thread-intro { min-height: 360px; --scene-width: min(88vw, 72svh); } .thread-hint { font-size: 18px; } }
+@media(prefers-reduced-motion: reduce) { .thread-pull__ring { animation: none; } }

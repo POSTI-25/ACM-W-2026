@@ -2,7 +2,11 @@ import { useRef, useEffect, useState, type FormEvent } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cooldownRemainingMs } from '../lib/rateLimit';
+import { createFooterSealingMotion } from './footerSealingMotion';
+import { createFooterBotanicalMotion } from './footerBotanicalMotion';
+import { footerEnvelopeGeometry } from './footerEnvelopeGeometry';
 import './EnvelopeFooter.css';
+import './EnvelopeFooterVintage.css';
 
 // Assets from src/assets/footer/
 import envelopeBacksideImg from '../assets/footer/envelopeBackside.png';
@@ -13,6 +17,9 @@ import envelopePocketImg from '../assets/footer/envelopePocket.png';
 // Two-part flap assets (both are upright triangles pointing UP)
 import insideFlapImg from '../assets/footer/insideFlap.png';
 import outsideFlapImg from '../assets/footer/outsideFlap.png';
+import waxSealImg from '../assets/footer/antique-gold-wax-seal.webp';
+import brassStampImg from '../assets/footer/antique-brass-seal-stamp.webp';
+import driedWildflowerImg from '../assets/footer/dried-wildflower-sprig.webp';
 
 // Social media icons & heart
 import heartImg from '../assets/footer/heart.png';
@@ -28,6 +35,25 @@ import featherCursorImg from '../assets/feather-cursor.png';
 
 
 gsap.registerPlugin(ScrollTrigger);
+
+function PostalMark({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 320 180" fill="none" aria-hidden="true" focusable="false">
+      <g stroke="currentColor" strokeWidth="1.1">
+        <circle cx="90" cy="90" r="66" />
+        <circle cx="90" cy="90" r="59" strokeDasharray="2 3" />
+        <path d="M145 63c25-18 38 18 64 0s39 18 65 0M151 78c25-18 38 18 64 0s39 18 65 0M153 93c25-18 38 18 64 0s39 18 65 0M150 108c25-18 38 18 64 0s39 18 65 0" />
+        <path d="M57 97h66M67 65h46" strokeWidth=".7" />
+      </g>
+      <g fill="currentColor" textAnchor="middle" fontFamily="Georgia, serif">
+        <text x="90" y="88" fontSize="20" letterSpacing="2">ACM-W</text>
+        <text x="90" y="116" fontSize="9" letterSpacing="2">VELLORE</text>
+        <text x="90" y="52" fontSize="7" letterSpacing="1.8">SPECIAL DELIVERY</text>
+        <text x="90" y="138" fontSize="7" letterSpacing="1.5">WITH CURIOSITY</text>
+      </g>
+    </svg>
+  );
+}
 
 export default function EnvelopeFooter() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -166,6 +192,9 @@ export default function EnvelopeFooter() {
   // Two-part flap refs
   const insideFlapRef = useRef<HTMLDivElement>(null);
   const outsideFlapRef = useRef<HTMLDivElement>(null);
+  const waxSealRef = useRef<HTMLImageElement>(null);
+  const waxContainerRef = useRef<HTMLDivElement>(null);
+  const sealStampRef = useRef<HTMLDivElement>(null);
 
   // ---- Light cursor on envelope hover ----
   // The site-wide cursor is a dark feather PNG. When hovering over the
@@ -205,9 +234,8 @@ export default function EnvelopeFooter() {
       // the mouse leaves because parent elements keep the dark cursor.
       style = document.createElement('style');
       style.textContent = `
-        .envelope-wrapper,
-        .envelope-wrapper * {
-          cursor: url("${dataUrl}") 4 4, auto !important;
+        .envelope-wrapper {
+          cursor: url("${dataUrl}") 4 4, auto;
         }
       `;
       document.head.appendChild(style);
@@ -228,7 +256,7 @@ export default function EnvelopeFooter() {
     const envelopeWrapper = envelopeWrapperRef.current;
     if (!envelopeWrapper) return;
     const measure = () =>
-      setWrapperWidth(Math.round(envelopeWrapper.getBoundingClientRect().width));
+      setWrapperWidth(envelopeWrapper.clientWidth);
     measure();
     if (typeof ResizeObserver === 'undefined') {
       window.addEventListener('resize', measure);
@@ -253,22 +281,29 @@ export default function EnvelopeFooter() {
     const envelopePocket = envelopePocketRef.current;
     const insideFlap = insideFlapRef.current;
     const outsideFlap = outsideFlapRef.current;
+    const waxSeal = waxSealRef.current;
+    const waxContainer = waxContainerRef.current;
+    const sealStamp = sealStampRef.current;
+    const waxPool = waxContainer?.querySelector<HTMLDivElement>('#wax-pool');
 
     if (
       !section || !pinContainer || !envelopeWrapper ||
       !envelopeInterior || !brownCard || !envelopePocket ||
-      !insideFlap || !outsideFlap || !envelopeShellRef.current
+      !insideFlap || !outsideFlap || !waxSeal || !waxContainer || !sealStamp || !waxPool || !envelopeShellRef.current
     ) return;
 
     const envelopeShell = envelopeShellRef.current;
+    let syncFinish: (() => void) | undefined;
 
     const ctx = gsap.context(() => {
       // ---- Responsive value scaling ----
       // The animation was designed for a 600px-wide envelope. On mobile
       // the wrapper is ~300px, so all pixel-based GSAP values must scale
       // proportionally. The ratio is rebuilt whenever the wrapper resizes.
-      const width = wrapperWidth || envelopeWrapper.getBoundingClientRect().width || 600;
+      const width = Number.parseFloat(getComputedStyle(envelopeWrapper).width) || wrapperWidth || 600;
       const r = width / 600; // 1.0 on desktop, ~0.5 on mobile
+      const { flapScale, flapY } = footerEnvelopeGeometry(width, width * (271 / 531));
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       // ---- Initial state setup ----
 
@@ -289,6 +324,7 @@ export default function EnvelopeFooter() {
       // shell. The shell itself handles visibility — when it slides
       // up, everything appears together as one cohesive unit.
       gsap.set(envelopeShell, { y: '100%', visibility: 'hidden' });
+      gsap.set(insideFlap.parentElement, { z: 0 });
 
       // Envelope layers: pre-positioned at resting layout.
       // No individual opacity:0 needed — the shell hides them.
@@ -307,9 +343,9 @@ export default function EnvelopeFooter() {
       gsap.set(insideFlap, { transformOrigin: '50% 100%' });
       gsap.set(insideFlap, {
         rotateX: 0,
-        y: -185 * r,
-        scale: 0.80,
-        z: 1,
+        y: flapY,
+        scale: flapScale,
+        z: -.3,
       });
 
       // Outside flap: set pivot at base, then match insideFlap's
@@ -320,192 +356,159 @@ export default function EnvelopeFooter() {
       gsap.set(outsideFlap, {
         opacity: 0,
         rotateX: -90,
-        y: -185 * r,
-        scale: 0.80,
-        z: 1.2,
+        y: flapY,
+        scale: flapScale,
+        z: 1.3,
+      });
+
+      // A local surface follows the original flap anchor. Counter-rotation
+      // keeps the liquid, tooling and embossed W upright after the fold.
+      gsap.set(waxContainer, {
+        xPercent: -50,
+        yPercent: -50,
+        rotateX: 180,
       });
 
       // Wrapper: no rotation yet
-      gsap.set(envelopeWrapper, { rotateY: 0 });
+      gsap.set(envelopeWrapper, { rotateY: 0, rotateZ: 0, x: 0, y: 0, scale: 1 });
+      const botanical = section.querySelector('.footer-botanical');
+      const endnote = section.querySelector('.footer-endnote');
+      gsap.set([botanical, endnote], { autoAlpha: 0 });
 
-      // ---- Master ScrollTrigger timeline ----
-      // The container is `position: sticky` (see .scroll-section__pin-container)
-      // so it stays on screen natively for the 600vh of the section; this
-      // trigger only scrubs the timeline against that scroll range.
+      // Keep the existing geometry and 3D depth ordering. Only the rhythm
+      // changes: gently overlapping preparation, a continuous fold, then a turn.
       const tl = gsap.timeline({
+        defaults: { ease: 'sine.inOut' },
         scrollTrigger: {
           trigger: section,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 0.8,
+          scrub: 0.45,
         },
       });
 
-      // ======================================================
-      // Step 0: SHRINK — Card scales from 1.4 → 1 (0 → 1.5)
-      // Gives the user a large form to fill, then shrinks
-      // to envelope-size before the rest of the sequence.
-      // ======================================================
-      tl.to(
-        brownCard,
-        {
-          scale: 1,
-          duration: 1.5,
-          ease: 'power2.out',
-        },
-        0
-      );
+      tl.addLabel('settle', 0)
+        .addLabel('lift', 1.8)
+        .addLabel('tilt', 3)
+        .addLabel('arrive', 4.2)
+        .addLabel('tuck', 6.4)
+        .addLabel('fold', 9.5)
+        .addLabel('hinge', 11)
+        .addLabel('closed', 12.5);
 
-      // ======================================================
-      // Step 1 & 2: Zoom in on the brown card (1.5 → 3.5)
-      // ======================================================
-      tl.to(
-        brownCard,
-        {
-          scale: 1.1,
-          duration: 2,
-          ease: 'power2.inOut',
+      tl.to(brownCard, {
+        scale: 1,
+        duration: 1.8,
+        ease: 'sine.out',
+      }, 'settle');
 
-        },
-        1.5
-      );
+      tl.to(brownCard, { scale: 1.1, duration: 2 }, 'lift');
+      tl.to(brownCard, {
+        rotateZ: 5,
+        z: 1.1,
+        x: -1 * r,
+        duration: 2,
+      }, 'tilt');
 
-      // ======================================================
-      // Step 3: First tilt — card tilts backward in 3D (3.5 → 5)
-      // ======================================================
-      tl.to(
-        brownCard,
-        {
-          // rotateX: 15,
-          rotateZ: +5,
-          duration: 1.5,
-          ease: 'power2.inOut',
-          z: 1.1,
-          x: -1 * r,
-        },
-        3.5
-      );
+      // Move the complete shell together. Opacity on this preserve-3d
+      // parent would flatten the card/pocket sandwich, so use visibility.
+      tl.set(envelopeShell, { visibility: 'visible' }, 'arrive');
+      tl.to(envelopeShell, { y: 0, duration: 2.3 }, 'arrive');
 
-      // ======================================================
-      // Step 4: Envelope appears — SYNCHRONIZED SLIDE-IN (5 → 6.5)
-      // The envelope shell slides up from off-screen as a single
-      // cohesive unit. All layers (interior, pocket, flap) are
-      // pre-positioned inside — no staggered individual tweens.
-      // The brown card is NOT inside the shell, so it is unaffected.
-      //
-      // NOTE: We use visibility (not opacity) to hide the shell.
-      // opacity < 1 breaks preserve-3d, flattening all children
-      // to z=0 and destroying the card's z-sandwich layering.
-      // ======================================================
-      tl.set(envelopeShell, { visibility: 'visible' }, 5);
-      tl.to(
-        envelopeShell,
-        {
-          y: 0,
-          duration: 1.5,
-          ease: 'power2.out',
-        },
-        5
-      );
+      tl.to(brownCard, {
+        rotation: 0,
+        rotateX: 0,
+        scale: 1,
+        x: -5 * r,
+        y: '25%',
+        z: 1.1,
+        duration: 2.8,
+      }, 'tuck');
 
-      // ======================================================
-      // Step 5B: Slide & Straighten — card drops into the pocket
-      // (keeping exact existing brownCard animation)
-      // ======================================================
-      tl.to(
-        brownCard,
-        {
-          rotation: 0,
-          rotateX: 0,
-          scale: 1,
-          duration: 2,
-          ease: 'power2.inOut',
-          x: -5 * r,
-          y: '25%',
-
-          z: 1.1,
-        },
-        7.5
-      );
-
-      // ======================================================
-      // Step 6: Close the flap — TWO-PART RELAY (10 → 13)
-      //
-      // Both flaps are upright triangles with transform-origin
-      // at bottom center. They rotate around their base edge.
-      //
-      // Step A: insideFlap folds toward user from upright (0°) to flat (-90°)
-      // Step B: outsideFlap takes over from flat (-90°) to closed (-180°)
-      // ======================================================
-
-      // Promote flap container to the front before the close starts
       const flapContainer = insideFlap.parentElement!;
-      tl.set(flapContainer, { zIndex: 5, z: 15 }, 10);
+      // Stay on the pocket's plane so perspective cannot pull the corners apart.
+      tl.set(flapContainer, { zIndex: 5, z: 0 }, 'fold');
+      tl.set(insideFlap, { z: 1.3 }, 'fold');
 
-      // Step A: Inside flap folds toward user from 0° → -90° (10 → 11)
-      tl.to(
-        insideFlap,
-        {
-          rotateX: -90,
-          duration: 1.0,
-          ease: 'power2.inOut',
-          scale: 0.80,
+      // These are the two halves of ONE sine.inOut fold. sine.in reaches
+      // the edge-on hinge at full speed; sine.out continues at that same
+      // speed, instead of braking and restarting at 90 degrees.
+      tl.to(insideFlap, {
+        rotateX: -90,
+        scale: flapScale,
+        duration: 1.5,
+        ease: 'sine.in',
+      }, 'fold');
 
-        },
-        10
-      );
+      // Swap faces only at the edge-on frame, preserving their hinge,
+      // coordinates, scale and depth. GSAP sets also reverse on scroll-up.
+      tl.set(outsideFlap, { opacity: 1 }, 'hinge');
+      tl.set(insideFlap, { opacity: 0 }, 'hinge');
+      tl.to(outsideFlap, {
+        rotateX: -180,
+        scale: flapScale,
+        y: flapY,
+        z: 1.3,
+        duration: 1.5,
+        ease: 'sine.out',
+      }, 'hinge');
 
-      // Overlapping handoff — both flaps are near edge-on here,
-      // so briefly showing both is invisible. This eliminates
-      // the single-frame glitch of an instant swap.
-      tl.set(outsideFlap, { opacity: 1 }, 10.8);   // show outsideFlap early
-      tl.set(insideFlap, { opacity: 0 }, 11.1);     // hide insideFlap late
+      // A short scroll hold gives the closed flap a clear handoff to playback.
+      tl.to({}, { duration: .6 });
+      const finish = gsap.timeline({ paused: true, defaults: { ease: 'sine.inOut' } });
+      finish.add(createFooterSealingMotion({
+        stamp: sealStamp,
+        pool: waxPool,
+        drops: Array.from(waxContainer.querySelectorAll<HTMLElement>('.wax-drop')),
+        seal: waxSeal,
+        envelope: envelopeWrapper,
+        ratio: r,
+        viewportWidth: window.innerWidth,
+        envelopeWidth: width,
+        reducedMotion,
+      }).paused(false), 0);
+      finish.addLabel('flatten');
+      finish.addLabel('turn', 'flatten+=.35');
 
-      // Step B: Outside flap continues from -90° → -180° (11 → 12)
-      tl.to(
-        outsideFlap,
-        {
-          rotateX: -180,
-          duration: 1.0,
-          ease: 'power2.inOut',
-          scale: 0.80,
-          y: -190 * r,
-          z: 1.2,
+      // Ease the closely registered paper layers into their resting depth stack.
+      finish.to(envelopeInterior, { z: -0.3, duration: .35 }, 'flatten');
+      finish.to(brownCard, { z: 0, duration: .35 }, 'flatten');
+      finish.to(envelopePocket, { z: 0.3, duration: .35 }, 'flatten');
+      finish.to(flapContainer, { z: 0.5, duration: .35 }, 'flatten');
+      finish.to(outsideFlap, { z: 0.6, duration: .35 }, 'flatten');
 
-        },
-        11
-      );
-
-      // ======================================================
-      // Step 8: Flip the entire envelope 180° (13.5 → 16.5)
-      // Reveals the backside with social links.
-      // Before flipping, collapse all layers to z:0 so they
-      // appear as one flat piece when viewed from the side.
-      // ======================================================
-
-      // Collapse depth stack to sub-pixel increments before the flip.
-      // Must preserve correct ordering (interior < card < pocket < flap)
-      // but gaps are too small to see when viewed edge-on during rotateY.
-      tl.set(envelopeInterior, { z: -0.3 }, 13.3);
-      tl.set(brownCard, { z: 0 }, 13.3);
-      tl.set(envelopePocket, { z: 0.3 }, 13.3);
-      tl.set(flapContainer, { z: 0.5 }, 13.3);
-      tl.set(outsideFlap, { z: 0.6 }, 13.3);
-
-      tl.to(
-        envelopeWrapper,
-        {
-          rotateY: 180,
-          duration: 3,
-          ease: 'power2.inOut',
-        },
-        13.5
-      );
+      // Rest the complete sealed assembly diagonally; local hinges stay untouched.
+      finish.to(envelopeWrapper, {
+        rotateZ: -12, x: 16 * r, y: -60 * r,
+        scale: window.innerWidth < 600 ? .86 : .94,
+        duration: reducedMotion ? 0 : 1.7,
+      }, 'turn');
+      finish.addLabel('envelope-rest');
+      const botanicalFlight = createFooterBotanicalMotion(botanical, r, pinContainer.clientHeight, reducedMotion);
+      botanicalFlight.timeScale(1);
+      finish.add(botanicalFlight.paused(false), 'envelope-rest+=.15');
+      finish.to(endnote, { autoAlpha: 1, duration: reducedMotion ? 0 : 1.2 }, '+=.15');
+      let finishStarted = false;
+      syncFinish = () => {
+        const closed = tl.time() >= tl.labels.closed;
+        if (closed && !finishStarted) {
+          finishStarted = true;
+          finish.restart();
+        } else if (!closed && finishStarted) {
+          // Rewinding to the open flap resets the entire automatic finish.
+          finishStarted = false;
+          finish.pause(0);
+          gsap.set([botanical, endnote], { autoAlpha: 0 });
+        }
+      };
+      tl.eventCallback('onUpdate', syncFinish);
     }, section);
 
     // Rebuilding mid-page: make ScrollTrigger re-measure so the fresh
     // timeline is scrubbed to the current scroll position immediately.
     ScrollTrigger.refresh();
+    // A resize can rebuild directly at the closed pose without an update event.
+    syncFinish?.();
 
     return () => {
       ctx.revert();
@@ -515,7 +518,21 @@ export default function EnvelopeFooter() {
   return (
     <section ref={sectionRef} className="scroll-section" id="contact">
       <div ref={pinContainerRef} className="scroll-section__pin-container">
+        <div className="footer-stationery" aria-hidden="true">
+          <PostalMark className="footer-stationery__postmark" />
+          <svg className="footer-stationery__trail" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
+            <path d="M-80 700C130 870 340 780 290 650S60 575 90 725C120 900 480 860 660 760S1060 730 1240 550s20-380 300-430" stroke="currentColor" strokeWidth="1" strokeDasharray="4 8" />
+            <path d="m125 598 144 35-100 100-9-69-35-66Zm35 66 109-31-90 47-10 53" stroke="currentColor" strokeWidth="1" />
+          </svg>
+          <span className="footer-stationery__address">ACM-W CORRESPONDENCE<br />VIT · VELLORE, INDIA</span>
+        </div>
+        <div className="footer-closing-caption">
+          <p>WITH CURIOSITY, ALWAYS</p>
+          <span>Until our next chapter.</span>
+        </div>
         <div className="scene">
+          <img className="footer-botanical" src={driedWildflowerImg} width={1024} height={1536}
+            alt="" aria-hidden="true" draggable={false} loading="lazy" decoding="async" />
           <div ref={envelopeWrapperRef} className="envelope-wrapper">
 
             {/* ========== FRONT FACE ========== */}
@@ -628,6 +645,14 @@ export default function EnvelopeFooter() {
                   </div>
                   <div ref={outsideFlapRef} className="outside-flap">
                     <img src={outsideFlapImg} alt="Envelope flap outside" draggable={false} />
+                    <div ref={waxContainerRef} id="wax-container" aria-hidden="true">
+                      <div id="wax-pool" />
+                      {[0, 1, 2, 3].map(drop => <span key={drop} className="wax-drop" />)}
+                      <img ref={waxSealRef} className="footer-wax-seal" src={waxSealImg} alt="" draggable={false} />
+                      <div ref={sealStampRef} id="seal-stamp">
+                        <img src={brassStampImg} alt="" draggable={false} />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -644,8 +669,12 @@ export default function EnvelopeFooter() {
                 draggable={false}
               />
 
-              {/* Content overlay — sits on top of the backside image */}
-              <div className="back-face__content">
+
+            </div>
+
+          </div>
+        </div>
+              <div className="back-face__content footer-endnote">
                 <div className="back-face__text-block">
                   <div className="back-face__text-row">
                     <span className="back-face__text">crafted with love by ACM-VIT</span>
@@ -656,6 +685,7 @@ export default function EnvelopeFooter() {
                       draggable={false}
                     />
                   </div>
+                  <span className="back-face__signature">Yours, ACM-W</span>
                 </div>
 
                 <div className="back-face__social-row">
@@ -679,10 +709,6 @@ export default function EnvelopeFooter() {
                   </a>
                 </div>
               </div>
-            </div>
-
-          </div>
-        </div>
       </div>
     </section>
   );

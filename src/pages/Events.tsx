@@ -236,7 +236,7 @@ export default function EventsPage() {
                   <h2 className="mb-4 font-[Kovanov,Georgia,serif] text-[clamp(1.5rem,3vw,2rem)] font-bold text-[#5B0F0F]">
                     {event.title}
                   </h2>
-                  <p className="font-[Kovanov,Georgia,serif] text-[clamp(0.95rem,1.1vw,1.08rem)] font-bold leading-[1.8] text-[#321515] max-sm:text-[0.95rem] max-sm:leading-[1.65]">
+                  <p className="font-[Quicksand,Arial,sans-serif] text-[clamp(1.0625rem,1.5vw,1.25rem)] font-semibold [font-synthesis:weight] leading-[1.85] text-[#241010] max-sm:leading-[1.75]">
                     {event.description}
                   </p>
                 </div>

@@ -1,55 +1,87 @@
+@font-face {
+  font-family: 'Award Gothic';
+  src: url('/fonts/UnifrakturCook-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
 .award-scene {
-  position: relative;
-  isolation: isolate;
-  width: 100%;
-  padding-top: 0;
-  /* Keep the top seam filled while the banner drifts by +/-3px. */
-  background: linear-gradient(#b49880, #b49880) top / 100% 6px no-repeat;
-  padding-bottom: clamp(6rem, 16vh, 10rem);
-  overflow: clip;
+  --flight-bleed: clamp(120px, 18vh, 200px);
+  position: relative; isolation: isolate; width: 100%;
+  padding: clamp(1.5rem, 5vh, 3.5rem) clamp(.25rem, 2vw, 2rem) clamp(10rem, 20vh, 13rem);
+  overflow: visible;
 }
 .award-banner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: clamp(4rem, 12vh, 6.25rem) clamp(1rem, 4vw, 1.5rem);
-  background: #b49880;
-  box-shadow: 0 12px 28px rgb(88 10 10 / 5%);
+  --paper-progress: 1;
+  /* The exposed sheet and roll share the same contact line, including the
+     transparent margins in the original parchment images. */
+  --paper-edge: calc(5% + var(--paper-progress) * 89%);
+  --roll-diameter: clamp(32px, 6.5vw, 74px);
+  position: relative; width: min(100%, 1120px); aspect-ratio: 3 / 2;
+  min-height: 380px; margin: 0 auto;
 }
-.award-banner::before {
-  content: '';
-  position: absolute;
-  inset: 14px clamp(16px, 2vw, 32px);
-  border-top: 1px solid rgb(88 10 10 / 13%);
-  border-bottom: 1px solid rgb(88 10 10 / 13%);
+.award-sheet {
+  position: absolute; inset: 0;
+  clip-path: inset(0 0 calc(100% - var(--paper-edge)) 0);
+}
+.award-sheet::after {
+  content: ''; position: absolute; z-index: 1; left: 2%; right: 2%;
+  top: var(--paper-edge); height: calc(var(--roll-diameter) * .65);
+  transform: translateY(-100%);
+  background: linear-gradient(transparent, #56301645);
   pointer-events: none;
 }
+.award-parchment-stock {
+  display: block; width: 100%; height: 100%; object-fit: fill;
+  pointer-events: none; user-select: none;
+}
+.award-inscription {
+  position: absolute; inset: 10% 10% 12%; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  color: #4f2416; text-align: center;
+}
+.award-flourish { margin-bottom: clamp(.75rem, 2vw, 1.75rem); font: 22px Georgia, serif; color: #7e4d29; }
 .award-banner h2 {
-  margin: 0;
-  color: #580a0a;
-  font-family: Kovanov, Georgia, serif;
-  font-weight: 700;
-  font-size: clamp(2.8rem, 7vw, 6.5rem);
-  line-height: 1.05;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-  text-align: center;
+  margin: 0; color: #4f2416; font-family: 'Award Gothic', Georgia, serif;
+  font-weight: 700; font-size: clamp(2.8rem, 7.5vw, 7rem);
+  line-height: 1.05; letter-spacing: -.015em; text-align: center;
+  text-shadow: 0 1px 0 #f4ddb344;
 }
-.award-banner p {
-  margin: clamp(1rem, 3vh, 1.5rem) 0 0;
-  color: #580a0a;
-  font: 400 clamp(1.1rem, 2vw, 1.6rem) Kovanov, serif;
-  text-align: center;
+.award-credit { display: flex; align-items: center; gap: clamp(.75rem, 2vw, 2rem); margin-top: clamp(1.25rem, 3vw, 2.75rem); }
+.award-credit > span { width: clamp(20px, 4vw, 60px); height: 1px; background: #79502a80; }
+.award-banner p { margin: 0; color: #59301e; font: 400 clamp(1rem, 2vw, 1.5rem)/1.4 Georgia, serif; font-variant: small-caps; letter-spacing: .08em; }
+.award-roll {
+  position: absolute; z-index: 3; left: 1.5%; width: 97%;
+  top: var(--paper-edge); height: var(--roll-diameter);
+  transform: translateY(-50%) scaleY(calc(1 - var(--paper-progress) * .34));
+  filter: drop-shadow(0 6px 4px #452b223d); pointer-events: none; user-select: none;
 }
+.award-roll-stock {
+  /* Visible alpha spans y=130..497 of the 724px source. Fit that paper,
+     rather than its transparent canvas, to the roll's contact line. */
+  position: absolute; left: 0; top: -35.4%; width: 100%; height: 197.3%;
+  object-fit: fill;
+}
+.award-roll-turn {
+  position: absolute; inset: 2% 4% 2%; border-radius: 50% / 22%;
+  background: url('../assets/award/aged-parchment.webp') 50% calc(var(--paper-progress) * -520px) / 100% 360%;
+  /* The moving fibers wrap around the cylinder while the ragged end caps
+     and fixed curved lighting retain the silhouette of the original asset. */
+  mask-image: linear-gradient(90deg, transparent, #000 7% 93%, transparent),
+    linear-gradient(transparent, #000 28% 70%, transparent);
+  mask-composite: intersect; mix-blend-mode: soft-light; opacity: .65;
+}
+@media(max-width:600px) {
+  .award-banner { aspect-ratio: 4 / 5; min-height: 390px; }
+  .award-inscription { inset: 12% 9% 14%; }
+  .award-banner h2 { font-size: clamp(2.55rem, 9vw, 3.6rem); line-height: 1.1; }
+  .award-banner p { font-size: 1rem; }
+}
+@media(prefers-reduced-motion:reduce) { .award-banner { --paper-progress: 1; } }
 .award-flight {
   position: absolute;
-  inset: 0;
+  inset: calc(-1 * var(--flight-bleed)) 0;
   z-index: 1;
   width: 100%;
-  height: 100%;
+  height: auto;
   overflow: visible;
   pointer-events: none;
 }

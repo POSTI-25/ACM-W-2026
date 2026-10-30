@@ -24,6 +24,8 @@ type ScientistData = {
   country: string;
   countryId: string;
   photo: string;
+  photoSize: [number, number];
+  countrySize: [number, number];
   /** Geographic centre of the country on the real globe */
   focus: { lng: number; lat: number };
   title: string;
@@ -40,6 +42,8 @@ const scientists: ScientistData[] = [
     country: india,
     countryId: "356",
     photo: kalpana,
+    photoSize: [1100, 1517],
+    countrySize: [649, 642],
     focus: { lng: 79, lat: 22 },
     title: "Astronaut — India",
     text: `Kalpana Chawla was the first woman of Indian origin in space. She served as a mission specialist and primary robotic arm operator on Space Shuttle Columbia. Her journey inspired millions of women to pursue science, aerospace and engineering.`,
@@ -52,6 +56,8 @@ const scientists: ScientistData[] = [
     country: poland,
     countryId: "616",
     photo: marie,
+    photoSize: [1100, 1523],
+    countrySize: [566, 470],
     focus: { lng: 20, lat: 52 },
     title: "Physicist — Poland",
     text: `Marie Curie pioneered research on radioactivity and became the first woman to win a Nobel Prize. She remains the only person to win Nobel Prizes in two scientific fields — Physics and Chemistry.`,
@@ -64,6 +70,8 @@ const scientists: ScientistData[] = [
     country: uk,
     countryId: "826",
     photo: ada,
+    photoSize: [1100, 1522],
+    countrySize: [458, 775],
     focus: { lng: -2, lat: 54 },
     title: "Mathematician — United Kingdom",
     text: `Ada Lovelace is widely regarded as the world's first computer programmer. Her notes on Charles Babbage's Analytical Engine introduced the idea that machines could go beyond calculations and manipulate symbols.`,
@@ -76,6 +84,8 @@ const scientists: ScientistData[] = [
     country: austria,
     countryId: "040",
     photo: hedy,
+    photoSize: [1100, 1519],
+    countrySize: [778, 344],
     focus: { lng: 14, lat: 47.5 },
     title: "Inventor — Austria",
     text: `Hedy Lamarr co-invented a frequency-hopping spread spectrum communication system during World War II that laid the groundwork for modern Wi-Fi, Bluetooth, and GPS technologies. Her dual legacy as a Hollywood icon and brilliant inventor defied every expectation placed upon her.`,
@@ -88,6 +98,8 @@ const scientists: ScientistData[] = [
     country: us,
     countryId: "840",
     photo: margaret,
+    photoSize: [1100, 1428],
+    countrySize: [791, 574],
     focus: { lng: -98, lat: 39 },
     title: "Computer Scientist — United States",
     text: `Margaret Hamilton led the team that developed the on-board flight software for NASA's Apollo missions. Her rigorous approach to software engineering — a term she coined — was critical to the success of the Moon landing and has influenced the discipline ever since.`,
@@ -105,6 +117,13 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Decode at page startup, while the visitor is still above this scene.
+    rootRef.current?.querySelectorAll<HTMLImageElement>('img').forEach(image => {
+      void image.decode().catch(() => undefined);
+    });
+  }, []);
+
+  useEffect(() => {
     const root = rootRef.current, viewport = viewportRef.current;
     const globeMotion = globeMotionRef.current, globe = globeRef.current;
     if (!root || !viewport || !globeMotion || !globe?.group || !globe.camera) return;
@@ -114,12 +133,6 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
     group.rotation.order = "XYZ";
     globe.setAutoRotate(false);
     globe.setDragEnabled(false);
-    let refreshFrame = 0;
-    const refreshImages = (event: Event) => {
-      if (!(event.target instanceof HTMLImageElement) || refreshFrame) return;
-      refreshFrame = requestAnimationFrame(() => { refreshFrame = 0; ScrollTrigger.refresh(); });
-    };
-    root.addEventListener("load", refreshImages, true);
     const media = gsap.matchMedia();
     media.add({ mobile: "(max-width: 48rem)", moving: "(prefers-reduced-motion: no-preference)",
       still: "(prefers-reduced-motion: reduce)" }, context => {
@@ -260,8 +273,6 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
     }, root);
     return () => {
       media.revert();
-      root.removeEventListener('load', refreshImages, true);
-      cancelAnimationFrame(refreshFrame);
       group.rotation.order = originalOrder;
     };
   }, [globeRef, globeMotionRef]);
@@ -272,12 +283,12 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
       {scientists.map(sci => <section key={sci.name} className="scientist-section" aria-label={sci.name}>
         <div className="country-img scientist-country-position" style={{ width: sci.countryWidth }}>
           <div className="scientist-air scientist-air--country">
-            <img className="scientist-country-art" src={sci.country} alt="" loading="lazy" decoding="async" />
+            <img className="scientist-country-art" src={sci.country} width={sci.countrySize[0]} height={sci.countrySize[1]} alt="" loading="eager" decoding="async" />
           </div>
         </div>
         <div className="photo-frame scientist-portrait-position">
           <div className="scientist-air">
-            <img className="scientist-portrait-image" src={sci.photo} alt={sci.name} loading="lazy" decoding="async" />
+            <img className="scientist-portrait-image" src={sci.photo} width={sci.photoSize[0]} height={sci.photoSize[1]} alt={sci.name} loading="eager" decoding="async" />
           </div>
         </div>
         <div className="scientist-text absolute top-1/2 left-[55%] w-[38%] max-w-[35rem] max-md:left-1/2 max-md:top-auto max-md:bottom-[16vh] max-md:w-[88vw] max-md:max-w-none max-md:-translate-x-1/2 max-md:translate-y-0 max-md:text-center max-md:z-[3] max-md:px-2 max-[30rem]:w-[92vw] max-[30rem]:bottom-[14vh]">

@@ -1,19 +1,22 @@
-import interior from '../assets/footer/envelopeInterior.png';
-import pocket from '../assets/footer/envelopePocket.png';
 import insideFlap from '../assets/footer/insideFlap.png';
-import outsideFlap from '../assets/footer/outsideFlap.png';
+import waxSeal from '../assets/footer/antique-gold-wax-seal.webp';
 import './NavbarEnvelope.css';
 
-/** Shared paper layers for the desktop and mobile navigation triggers. */
+/** The same engraved paper as the landing and footer, in a compact live hinge. */
 export default function NavbarEnvelope({ isOpen }: { isOpen: boolean }) {
   return (
     <span className={`navbar-envelope ${isOpen ? 'is-open' : ''}`} aria-hidden="true">
-      <img className="navbar-envelope-interior" src={interior} alt="" draggable={false} />
+      <span className="navbar-envelope-interior" />
       <span className="navbar-envelope-flap">
         <img className="navbar-envelope-flap-inside" src={insideFlap} alt="" draggable={false} />
-        <img className="navbar-envelope-flap-outside" src={outsideFlap} alt="" draggable={false} />
+        <span className="navbar-envelope-flap-outside">
+          <svg viewBox="0 0 549 235" fill="none" focusable="false">
+            <path d="M2 233L270 3Q274 0 278 3L547 233" stroke="#cb9671" strokeWidth="5" opacity=".65" />
+          </svg>
+        </span>
       </span>
-      <img className="navbar-envelope-pocket" src={pocket} alt="" draggable={false} />
+      <span className="navbar-envelope-pocket" />
+      <img className="navbar-envelope-seal" src={waxSeal} alt="" draggable={false} />
     </span>
   );
 }

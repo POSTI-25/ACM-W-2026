@@ -19,13 +19,13 @@ function makePlane() {
   geometry.addGroup(3, 3, 1);
   geometry.addGroup(6, 3, 0);
   geometry.addGroup(9, 3, 1);
-  const materials = [0x191613, 0x30271f].map(color => new THREE.MeshStandardMaterial({
+  const materials = [0xd8b780, 0xa47b49].map(color => new THREE.MeshStandardMaterial({
     color, roughness: .96, metalness: 0, side: THREE.DoubleSide,
   }));
   const plane = new THREE.Group();
   plane.add(new THREE.Mesh(geometry, materials));
   const edges = new THREE.EdgesGeometry(geometry, 12);
-  const ink = new THREE.LineBasicMaterial({ color: 0xb99b7a, transparent: true, opacity: .64 });
+  const ink = new THREE.LineBasicMaterial({ color: 0x654326, transparent: true, opacity: .76 });
   plane.add(new THREE.LineSegments(edges, ink));
   return { plane, dispose: () => { geometry.dispose(); edges.dispose(); ink.dispose(); materials.forEach(m => m.dispose()); } };
 }
@@ -62,7 +62,7 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
   const trail = createAwardInkTrail();
   scene.add(trail.mesh);
   const tail = new THREE.Vector3();
-  const accents = createAwardFlightAccents(stage);
+  const accents = createAwardFlightAccents(host, banner);
   const heartWorld = new THREE.Vector3(), previousPosition = new THREE.Vector3();
   const heartPoint = { x: 0, y: 0 };
   const heartCenter = new THREE.Vector2();
@@ -86,7 +86,7 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
   const cameraPosition = new THREE.Vector3(), cameraAim = new THREE.Vector3(), targetAim = new THREE.Vector3();
 
   const measure = () => {
-    const bounds = stage.getBoundingClientRect();
+    const bounds = host.getBoundingClientRect();
     width = Math.max(1, bounds.width);
     height = Math.max(1, bounds.height);
     distance = Math.max(height * 1.2, width * .9);
@@ -109,9 +109,12 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
     trail.resize(width, height);
     accents.resize(width, height);
     const credit = banner.querySelector('p')!.getBoundingClientRect();
-    heartY = Math.min(90, Math.max(50, (height - (credit.bottom - bounds.top) - 30) / 2));
+    // Leave clearance for the aircraft and ink dots, not just the path center.
+    const heartTop = credit.bottom - bounds.top + 15;
+    const flightClearance = 64;
+    heartY = Math.min(90, Math.max(1, (height - heartTop - flightClearance) / 2));
     heartX = Math.min(width < 640 ? 82 : 105, width * .22);
-    heartCenter.set(width * (width < 640 ? .55 : .67), credit.bottom - bounds.top + heartY + 15);
+    heartCenter.set(width * (width < 640 ? .55 : .67), heartTop + heartY);
     hasPreviousPosition = false;
   };
 
@@ -202,6 +205,7 @@ export function createAwardFlight(host: HTMLElement, stage: HTMLElement, banner:
   render(0);
   const resize = new ResizeObserver(measure);
   resize.observe(stage);
+  resize.observe(host);
   void document.fonts.ready.then(() => { if (!disposed) measure(); });
   document.fonts.addEventListener('loadingdone', measure);
 

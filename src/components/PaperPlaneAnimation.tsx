@@ -61,8 +61,8 @@ export default function PaperPlaneAnimation() {
 
   return <div ref={root} className="award-flight" data-renderer="fallback" aria-hidden="true">
     <svg className="award-flight-fallback" viewBox="0 0 80 50" focusable="false">
-      <path d="M8 7 73 24 13 45 25 26Z" fill="#211c18"/>
-      <path d="M8 7 25 26 73 24M25 26 13 45 38 31" fill="none" stroke="#c0a383" strokeWidth="1.3"/>
+      <path d="M8 7 73 24 13 45 25 26Z" fill="#c5a16c"/>
+      <path d="M8 7 25 26 73 24M25 26 13 45 38 31" fill="none" stroke="#654326" strokeWidth="1.3"/>
     </svg>
   </div>;
 }

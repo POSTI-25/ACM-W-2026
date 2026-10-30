@@ -1,0 +1,358 @@
+@font-face {
+  font-family: 'Footer Signature';
+  src: url('/fonts/GreatVibes-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Decorations live outside the 3D assembly. Its dimensions, hinge points,
+   transforms and depth stack remain owned by the original scene. */
+.scroll-section__pin-container {
+  background: #fff9e9;
+}
+
+.footer-stationery {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: #764e38;
+}
+
+.footer-stationery::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 120px #78552b1a;
+  background: linear-gradient(104deg, transparent 32%, #fff9e72e 32.2%, transparent 32.5%, transparent 73%, #80654208 73.2%, transparent 73.5%);
+}
+
+.footer-stationery__postmark {
+  position: absolute;
+  top: 14%;
+  right: -2%;
+  width: clamp(240px, 29vw, 430px);
+  opacity: .21;
+  transform: rotate(-16deg);
+}
+
+.footer-stationery__trail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .28;
+}
+
+.footer-stationery__address {
+  position: absolute;
+  bottom: 6%;
+  left: 5%;
+  font: 10px/1.9 'Quicksand', Arial, sans-serif;
+  letter-spacing: .2em;
+  opacity: .65;
+}
+
+.footer-closing-caption {
+  position: absolute;
+  top: clamp(28px, 7vh, 68px);
+  left: 0;
+  width: 100%;
+  padding: 0 24px;
+  box-sizing: border-box;
+  text-align: center;
+  color: #673627;
+  pointer-events: none;
+}
+
+.footer-closing-caption p {
+  margin: 0 0 8px;
+  font: 10px/1.5 'Quicksand', Arial, sans-serif;
+  letter-spacing: .28em;
+}
+
+.footer-closing-caption > span {
+  font: 400 clamp(32px, 4.5vw, 54px)/1.15 'Footer Signature', Georgia, serif;
+}
+
+/* Shadows sit on flat image leaves, never on a preserve-3d parent. */
+.envelope-pocket > img {
+  filter: drop-shadow(0 14px 12px #4b261b24);
+}
+
+.outside-flap > img {
+  filter: drop-shadow(0 3px 2px #31120f35);
+}
+
+.back-face__img {
+  filter: drop-shadow(0 16px 16px #4b261b33);
+}
+
+/* Original PNG alpha masks preserve every silhouette and fold edge.
+   Texture is a separate, non-interactive leaf that follows each layer. */
+.envelope-pocket::after,
+.outside-flap::after,
+.envelope-interior::after,
+.inside-flap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(112deg, #ffe4ba10 0 .65px, #2804080a .65px 1.8px, transparent 1.8px 4px),
+    url('../assets/footer/vintage-burgundy-paper.webp') center / 340px;
+  mix-blend-mode: soft-light;
+  opacity: 1;
+  mask: var(--footer-piece-mask) center / contain no-repeat;
+}
+
+.envelope-pocket { --footer-piece-mask: url('../assets/footer/envelopePocket.png'); }
+.outside-flap { --footer-piece-mask: url('../assets/footer/outsideFlap.png'); }
+/* Use the landing envelope's engraved stock. The pocket PNG is square,
+   with its paper occupying the bottom two thirds of the contained image. */
+.envelope-pocket::after {
+  background: url('../assets/footer/landing-engraved-burgundy.webp') center bottom / auto 66.6667% no-repeat;
+  mix-blend-mode: normal;
+  opacity: .96;
+}
+.outside-flap::after {
+  background:
+    linear-gradient(0deg, #27010522, #bb63412b),
+    url('../assets/footer/landing-engraved-burgundy.webp') right top / 240% 220%;
+  mix-blend-mode: normal;
+  opacity: .96;
+}
+/* Both faces share one hinge box even though the source PNG ratios differ. */
+.outside-flap::after,
+.inside-flap::after {
+  mask-size: 100% 100%;
+  mask-position: center;
+}
+
+#wax-container {
+  position: absolute;
+  /* The flap folds upside down: this places the seal at the envelope's
+     visual centre, rather than hanging below the flap tip. */
+  top: 21%;
+  left: 50%;
+  z-index: 1;
+  width: 22%;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.outside-flap .footer-wax-seal {
+  position: absolute;
+  /* Compensate for the artwork's uneven transparent margins. */
+  top: 2.7%;
+  left: -3.25%;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px #2e100c66);
+}
+
+#wax-pool {
+  position: absolute;
+  inset: 3%;
+  z-index: 1;
+  border-radius: 48% 52% 47% 53%;
+  background:
+    radial-gradient(ellipse at 32% 24%, #ebc777b3 0, transparent 36%),
+    radial-gradient(ellipse at 65% 74%, #80501f99 0, transparent 52%),
+    linear-gradient(145deg, #c79643, #b17a2f 60%, #936024);
+  box-shadow: inset 1px 2px 3px #ffe4a45c, inset -2px -3px 4px #6843168c, 0 2px 3px #341a1459;
+  opacity: 0;
+  transform: scale(0);
+}
+
+#wax-pool::before {
+  content: '';
+  position: absolute;
+  top: 14%;
+  left: 17%;
+  width: 39%;
+  height: 13%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff0bd8c, #fff0bd00);
+  transform: rotate(-24deg);
+}
+
+.wax-drop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: 16%;
+  height: 25%;
+  border-radius: 55% 55% 45% 45% / 75% 75% 30% 30%;
+  background: linear-gradient(100deg, #e6bb68, #b47b2e 65%, #8c581d);
+  box-shadow: inset 1px 0 1px #f8d99680;
+  opacity: 0;
+}
+
+#seal-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  width: 110%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+}
+
+#seal-stamp > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(3px 5px 4px #2c170d45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-section { height: 300vh; }
+}
+.envelope-interior { --footer-piece-mask: url('../assets/footer/envelopeInterior.png'); }
+.inside-flap { --footer-piece-mask: url('../assets/footer/insideFlap.png'); }
+
+.envelope-interior::after,
+.inside-flap::after {
+  background-image: url('../assets/footer/vintage-ivory-paper.webp');
+  background-size: cover;
+  mix-blend-mode: normal;
+  opacity: .62;
+}
+
+.envelope-backside::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  aspect-ratio: 539 / 362;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%) scale(.85);
+  background:
+    url('../assets/footer/landing-engraved-burgundy.webp') center / 100% 100%;
+  mask: url('../assets/footer/envelopeBackside.png') center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+/* The original card image still reserves the exact form dimensions. */
+.brown-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 8px;
+  background:
+    linear-gradient(105deg, #c4a37d28, transparent 48%, #a47a4526),
+    url('../assets/footer/vintage-ivory-paper.webp') center / cover;
+  box-shadow: inset 0 0 24px #9d713329, inset 0 0 0 1px #a27c4933;
+  pointer-events: none;
+}
+
+.brown-card__form { z-index: 1; }
+
+.back-face__content { z-index: 1; }
+
+.back-face__postmark {
+  position: absolute;
+  top: -12%;
+  right: 2%;
+  width: 26%;
+  color: #ead3ad;
+  opacity: .24;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+.back-face__text {
+  font-family: 'Kovanov', Georgia, serif;
+  font-weight: 400;
+  color: #f5e4c6;
+  text-shadow: 0 1px 1px #210b0766;
+}
+
+.back-face__signature {
+  font: 400 32px/1.2 'Footer Signature', Georgia, serif;
+  color: #e9cba5;
+  margin-top: 7px;
+}
+
+.back-face__heart { animation: none; opacity: .8; }
+.back-face__social-icon { opacity: .85; }
+
+@media (max-width: 600px) {
+  .footer-closing-caption { top: 9%; }
+  .footer-closing-caption p { font-size: 8px; letter-spacing: .2em; }
+  .footer-stationery__postmark { top: 23%; right: -25%; width: 240px; opacity: .16; }
+  .footer-stationery__address { font-size: 8px; left: 7%; bottom: 8%; }
+  .back-face__signature { font-size: 19px; margin-top: 4px; }
+  /* Fit the existing card silhouette; reserve room for the submit button. */
+  .brown-card__form { padding: 4% 7%; }
+  .brown-card__heading { line-height: 1.1; }
+  .brown-card__field { line-height: 1.2; }
+  .brown-card__submit { padding: 3px 14px; line-height: 1.2; }
+}
+
+@media (max-height: 500px) {
+  .footer-closing-caption { top: 12px; }
+  .footer-closing-caption > span { font-size: 27px; }
+  .footer-closing-caption p { margin-bottom: 3px; font-size: 8px; }
+}
+
+/* A final still-life accent, outside the envelope's original 3D layers. */
+.footer-botanical {
+  position: absolute;
+  width: 40%;
+  height: auto;
+  left: 2%;
+  top: -6%;
+  z-index: 2;
+  transform: rotate(16deg);
+  pointer-events: none;
+  visibility: hidden;
+  filter: drop-shadow(1px 3px 2px #39261724);
+}
+.footer-endnote.back-face__content {
+  top: auto;
+  bottom: 5%;
+  left: 0;
+  width: 100%;
+  height: auto;
+  padding: 0 20px;
+  gap: 14px;
+  transform: none;
+  visibility: hidden;
+}
+.footer-endnote .back-face__text { color: #673627; text-shadow: none; font-size: 15px; }
+.footer-endnote .back-face__signature { color: #764e38; font-size: 25px; }
+.footer-endnote .back-face__social-icon,
+.footer-endnote .back-face__heart { filter: brightness(.4) sepia(1) saturate(2); }
+.footer-endnote .back-face__social-icon { width: 21px; height: 21px; }
+.footer-endnote .back-face__social-row { gap: 20px; }
+@media (max-width: 600px) {
+  .footer-botanical { left: 2%; top: -6%; width: 38%; }
+  .footer-endnote.back-face__content { bottom: 6%; gap: 10px; }
+  .footer-endnote .back-face__text { font-size: 12px; }
+  .footer-endnote .back-face__signature { font-size: 22px; }
+}
+@media (max-height: 500px) {
+  .footer-endnote.back-face__content { bottom: 2%; gap: 5px; }
+  .footer-endnote .back-face__signature { display: none; }
+}
+
+@media (max-width: 600px) {
+  .footer-stationery__address {
+    bottom: 2%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 6.5px;
+  }
+  .footer-endnote.back-face__content { bottom: 9%; }
+}

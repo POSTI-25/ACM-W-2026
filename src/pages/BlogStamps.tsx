@@ -3,23 +3,23 @@ import { gsap } from "gsap";
 import leftArr from "../assets/leftArr.png";
 import rightArr from "../assets/rightArr.png";
 import { blogs } from "../data/blogs";
-import BlogStampRoll from "./BlogStampRoll";
 import { RollingSectionTitle } from "../components/EventsTitle";
 import StampBorder from "../components/StampBorder";
 
-const SPREAD = 90;
+// Keep the previous six-card fan's step; extra cards extend its outer edges.
+const ANGLE_STEP = 52 / 5;
 
 // Cards dealt into the fan at once. The arrows page through the whole archive a
 // set at a time and wrap around at either end, so the rotation never runs out.
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 8;
 const PAGE_COUNT = Math.max(1, Math.ceil(blogs.length / PAGE_SIZE));
 
 // The last page is pulled back so it stays a full fan instead of dealing a
-// lonely card or two: 12 posts give pages starting at 0, 5 and 7.
+// lonely card or two: 18 posts give pages starting at 0, 8 and 10.
 const pageStart = (page: number) =>
   Math.min(page * PAGE_SIZE, Math.max(0, blogs.length - PAGE_SIZE));
 
-function BlogStampsDesktop() {
+export default function BlogStamps() {
   // Seeded from the real viewport so the first layout pass is already
   // correct instead of laying out for 1200×800 and jumping a frame later.
   const [viewport, setViewport] = useState(() =>
@@ -32,7 +32,11 @@ function BlogStampsDesktop() {
   const [page, setPage] = useState(0);
 
   const start = pageStart(page);
-  const visible = blogs.slice(start, start + PAGE_SIZE);
+  const pageBlogs = blogs.slice(start, start + PAGE_SIZE);
+  // Preserve the original six in the middle, then add a new post at each edge.
+  const visible = pageBlogs.length > 6
+    ? [pageBlogs[6], ...pageBlogs.slice(0, 6), ...pageBlogs.slice(7)]
+    : pageBlogs;
   const n = visible.length;
 
   // Slot order within the fan, holding indices into `visible`.
@@ -53,18 +57,35 @@ function BlogStampsDesktop() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const cardW = Math.min(viewport.w * 0.28, viewport.h * 0.42);
+  const compact = viewport.w < 768;
+  const cardW = compact
+    ? Math.min(viewport.w * 0.54, viewport.h * 0.35)
+    : Math.min(viewport.w * 0.28, viewport.h * 0.42);
   const cardH = cardW * 1.25;
-  const fanSpacing = viewport.w * 0.145;
-  const fanDrop = viewport.h * 0.025;
+  const fanSpacing = cardW * 0.18;
+  const fanDrop = cardH * 0.065;
+
+  const getFanProps = (slot: number) => {
+    // A close hand-held fan: even groups stay centered and each card
+    // overlaps the one to its left, with the rightmost card on top.
+    const offset = slot - (n - 1) / 2;
+    const normalizedOffset = offset / 2.5;
+    const angle = offset * ANGLE_STEP;
+    return {
+      angle,
+      zIndex: slot + 1,
+      tx: offset * fanSpacing,
+      ty: normalizedOffset * normalizedOffset * fanDrop,
+    };
+  };
   // Measure the rotated corners, including the lowest outer stamp corners.
   // The old bottom anchor sat below the section and cropped the whole fan.
   const corners = Array.from({ length: n }, (_, slot) => {
-    const offset = slot - Math.floor(n / 2);
-    const angle = (-SPREAD / 2 + slot * (n > 1 ? SPREAD / (n - 1) : 0)) * Math.PI / 180;
+    const { angle: degrees, tx, ty } = getFanProps(slot);
+    const angle = degrees * Math.PI / 180;
     return [-cardW / 2, cardW / 2].flatMap(x => [-cardH, 0].map(y => ({
-      x: offset * fanSpacing + x * Math.cos(angle) - y * Math.sin(angle),
-      y: Math.abs(offset) * fanDrop + x * Math.sin(angle) + y * Math.cos(angle),
+      x: tx + x * Math.cos(angle) - y * Math.sin(angle),
+      y: ty + x * Math.sin(angle) + y * Math.cos(angle),
     })));
   }).flat();
   const minX = Math.min(...corners.map(p => p.x));
@@ -73,12 +94,12 @@ function BlogStampsDesktop() {
   const maxY = Math.max(...corners.map(p => p.y));
   const bottomPadding = Math.max(32, viewport.h * .045);
   const headingFontSize = Math.max(80, Math.min(viewport.w * .18, 248));
-  const headingSpace = headingFontSize * 1.24 + 110;
-  const sidePadding = Math.max(64, viewport.w * .045);
-  const scale = Math.min(1.2, (viewport.w - sidePadding * 2) / (maxX - minX));
+  const headingSpace = headingFontSize * 1.24 + (compact ? 120 : 110);
+  const sidePadding = compact ? 44 : Math.max(64, viewport.w * .045);
+  const scale = Math.min(1.15, (viewport.w - sidePadding * 2) / (maxX - minX));
   const fanHeight = (maxY - minY) * scale;
   const fanAnchorBottom = bottomPadding + maxY * scale;
-  const sectionHeight = Math.max(viewport.h, headingSpace + fanHeight + bottomPadding);
+  const sectionHeight = Math.max(compact ? 460 : viewport.h, headingSpace + fanHeight + bottomPadding);
   const headingTop = 20;
   const contentScale = Math.max(0.75, Math.min(1, scale));
   const imageHeight = Math.round(cardH * 0.5 * contentScale);
@@ -87,17 +108,6 @@ function BlogStampsDesktop() {
   const metaSize = 8 * contentScale;
   const bodySize = 9 * contentScale;
   const linkSize = 10 * contentScale;
-
-  const getFanProps = (slot: number) => {
-    const centerSlot = Math.floor(n / 2);
-    const step = n > 1 ? SPREAD / (n - 1) : 0;
-    const angle = -SPREAD / 2 + slot * step;
-    const offset = slot - centerSlot;
-    const tx = offset * fanSpacing;
-    const ty = Math.abs(offset) * fanDrop;
-    const zIndex = 10 - Math.abs(offset);
-    return { angle, zIndex, tx, ty };
-  };
 
   useEffect(() => {
     if (activeIdx !== null) return;
@@ -159,9 +169,9 @@ function BlogStampsDesktop() {
         ease: "power2.out",
       });
     });
-    const maxScaleW = (viewport.w * 0.72) / (cardW * scale);
+    const maxScaleW = (viewport.w * (compact ? 0.8 : 0.72)) / (cardW * scale);
     const maxScaleH = (viewport.h * 0.72) / (cardH * scale);
-    const targetScale = Math.max(1, Math.min(1.4, maxScaleW, maxScaleH));
+    const targetScale = Math.max(1, Math.min(compact ? 3.2 : 1.4, maxScaleW, maxScaleH));
     const targetY =
       (cardH * targetScale - sectionHeight / scale) / 2 + fanAnchorBottom / scale;
     gsap.to(el, {
@@ -325,7 +335,7 @@ function BlogStampsDesktop() {
     <div
       style={{
         width: "100%",
-        minHeight: "100svh",
+        minHeight: compact ? undefined : "100svh",
         height: sectionHeight,
         background: "#FFF9E9",
         fontFamily: "'Georgia', serif",
@@ -338,6 +348,10 @@ function BlogStampsDesktop() {
       }}
     >
       <style>{`
+        .blog-fan-card:focus-visible {
+          outline: 2px solid #580a0a;
+          outline-offset: 6px;
+        }
         @keyframes blog-hint-in {
           from { opacity: 0; transform: translateY(0.25rem); }
           to { opacity: 1; transform: none; }
@@ -404,7 +418,7 @@ function BlogStampsDesktop() {
         style={{
           position: "absolute",
           left: 0,
-          top: "50%",
+          top: activeIdx !== null ? sectionHeight / 2 : sectionHeight - bottomPadding - fanHeight / 2,
           transform: "translateY(-50%)",
           background: "none",
           border: "none",
@@ -431,7 +445,7 @@ function BlogStampsDesktop() {
         style={{
           position: "absolute",
           right: 0,
-          top: "50%",
+          top: activeIdx !== null ? sectionHeight / 2 : sectionHeight - bottomPadding - fanHeight / 2,
           transform: "translateY(-50%)",
           background: "none",
           border: "none",
@@ -461,7 +475,7 @@ function BlogStampsDesktop() {
             position: "absolute",
             left: 0,
             right: 0,
-            bottom: "clamp(1rem, 3vh, 2rem)",
+            bottom: compact ? 0 : "clamp(1rem, 3vh, 2rem)",
             textAlign: "center",
             margin: 0,
             fontFamily: "Kovanov, serif",
@@ -520,12 +534,25 @@ function BlogStampsDesktop() {
             return (
               <div
                 key={blog.id}
+                className="blog-fan-card"
+                role="button"
+                tabIndex={0}
+                aria-label={`Read ${blog.title}`}
                 ref={(el) => {
                   cardRefs.current[cardIdx] = el;
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCardClick(cardIdx);
+                }}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleCardClick(cardIdx);
+                  } else if (e.key === "Escape") {
+                    closeZoom();
+                  }
                 }}
                 onMouseEnter={() => hoverCard(cardIdx, true)}
                 onMouseLeave={() => hoverCard(cardIdx, false)}
@@ -675,6 +702,8 @@ function BlogStampsDesktop() {
                           style={{
                             flex: 1,
                             overflow: "hidden",
+                            fontFamily: "Quicksand, Arial, sans-serif",
+                            fontWeight: 400,
                             fontSize: bodySize,
                             color: "#3a1212",
                             lineHeight: 1.55,
@@ -710,19 +739,4 @@ function BlogStampsDesktop() {
       </div>
     </div>
   );
-}
-
-export default function BlogStamps() {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 768
-  );
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  if (isMobile) return <BlogStampRoll />;
-  return <BlogStampsDesktop />;
 }
