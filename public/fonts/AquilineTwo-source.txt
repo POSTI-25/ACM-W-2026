@@ -1,0 +1,5 @@
+Aquiline Two by Manfred Klein.
+Source: https://www.dafont.com/aquiline-two.font
+Downloaded from the author's DaFont distribution, which lists the font as 100% Free.
+The original font file is included unchanged. Award glyph outlines are generated
+from it by scripts/generate-award-engraving.py.

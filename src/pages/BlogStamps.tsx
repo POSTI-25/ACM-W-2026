@@ -1,23 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { gsap } from "gsap";
-import leftArr from "../assets/leftArr.png";
-import rightArr from "../assets/rightArr.png";
 import { blogs } from "../data/blogs";
 import { RollingSectionTitle } from "../components/EventsTitle";
 import StampBorder from "../components/StampBorder";
-
-// Keep the previous six-card fan's step; extra cards extend its outer edges.
-const ANGLE_STEP = 52 / 5;
-
-// Cards dealt into the fan at once. The arrows page through the whole archive a
-// set at a time and wrap around at either end, so the rotation never runs out.
-const PAGE_SIZE = 8;
-const PAGE_COUNT = Math.max(1, Math.ceil(blogs.length / PAGE_SIZE));
-
-// The last page is pulled back so it stays a full fan instead of dealing a
-// lonely card or two: 18 posts give pages starting at 0, 8 and 10.
-const pageStart = (page: number) =>
-  Math.min(page * PAGE_SIZE, Math.max(0, blogs.length - PAGE_SIZE));
 
 export default function BlogStamps() {
   // Seeded from the real viewport so the first layout pass is already
@@ -29,55 +15,67 @@ export default function BlogStamps() {
   );
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [page, setPage] = useState(0);
-
-  const start = pageStart(page);
-  const pageBlogs = blogs.slice(start, start + PAGE_SIZE);
-  // Preserve the original six in the middle, then add a new post at each edge.
-  const visible = pageBlogs.length > 6
-    ? [pageBlogs[6], ...pageBlogs.slice(0, 6), ...pageBlogs.slice(7)]
-    : pageBlogs;
-  const n = visible.length;
-
-  // Slot order within the fan, holding indices into `visible`.
-  const [order, setOrder] = useState<number[]>(() =>
-    Array.from({ length: Math.min(PAGE_SIZE, blogs.length) }, (_, i) => i)
-  );
-
+  const [requestedPage, setPage] = useState(0);
+  const compact = viewport.w < 768;
+  const pageSize = compact ? 4 : 8;
+  const pageCount = Math.max(1, Math.ceil(blogs.length/pageSize));
+  const page = Math.min(requestedPage, pageCount-1);
+  const visible = blogs;
+  const n = Math.min(pageSize, blogs.length);
+  const order = blogs.map((_, index) => index);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-  // Set whenever the next layout pass should deal the cards up from the bottom
-  // rather than slide them between fan positions.
-  const dealRef = useRef(true);
+  const motionRef = useRef({ position: 0 });
   const pagingRef = useRef(false);
+  const fanRef = useRef<HTMLDivElement>(null);
+  const returningFromZoomRef = useRef(false);
+  const suppressClickRef = useRef(false);
+  const dragRef = useRef<{
+    pointerId: number; startX: number; startY: number;
+    lastX: number; lastTime: number; velocity: number; dx: number; locked: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    const update = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    let previousWidth = window.innerWidth;
+    const motion = motionRef.current;
+    const update = () => {
+      if (previousWidth !== window.innerWidth) {
+        previousWidth = window.innerWidth;
+        setActiveIdx(null);
+        setIsFlipped(false);
+        cardRefs.current.forEach(card => {
+          const inner = card?.querySelector('.stamp-inner');
+          if (inner) { gsap.killTweensOf(inner); gsap.set(inner, { rotationY: 0 }); }
+        });
+      }
+      setViewport({ w: window.innerWidth, h: window.innerHeight });
+    };
     update();
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      gsap.killTweensOf(motion);
+    };
   }, []);
 
-  const compact = viewport.w < 768;
   const cardW = compact
-    ? Math.min(viewport.w * 0.54, viewport.h * 0.35)
-    : Math.min(viewport.w * 0.28, viewport.h * 0.42);
+    ? Math.min(viewport.w * .75, viewport.h * .5)
+    : Math.min(viewport.w * .34, viewport.h * .58);
   const cardH = cardW * 1.25;
-  const fanSpacing = cardW * 0.18;
-  const fanDrop = cardH * 0.065;
-
-  const getFanProps = (slot: number) => {
-    // A close hand-held fan: even groups stay centered and each card
-    // overlaps the one to its left, with the rightmost card on top.
-    const offset = slot - (n - 1) / 2;
-    const normalizedOffset = offset / 2.5;
-    const angle = offset * ANGLE_STEP;
+  const angleStep = compact ? 8 : 9.2;
+  const radius = cardW * (compact ? .72 : .9);
+  const fanPose = (offset: number) => {
+    const angle = offset*angleStep;
+    const radians = angle*Math.PI/180;
     return {
       angle,
-      zIndex: slot + 1,
-      tx: offset * fanSpacing,
-      ty: normalizedOffset * normalizedOffset * fanDrop,
+      tx: radius*Math.sin(radians),
+      ty: radius*(1-Math.cos(radians)),
+      zIndex: Math.abs(angle) < 85 ? 1000+Math.round(angle*10) : 0,
     };
   };
+  const getFanProps = (slot: number) => fanPose(slot-(n-1)/2);
+  const getCardProps = (index: number, position: number) =>
+    fanPose(gsap.utils.wrap(-blogs.length/2, blogs.length/2, index-position-(n-1)/2));
   // Measure the rotated corners, including the lowest outer stamp corners.
   // The old bottom anchor sat below the section and cropped the whole fan.
   const corners = Array.from({ length: n }, (_, slot) => {
@@ -92,14 +90,13 @@ export default function BlogStamps() {
   const maxX = Math.max(...corners.map(p => p.x));
   const minY = Math.min(...corners.map(p => p.y));
   const maxY = Math.max(...corners.map(p => p.y));
-  const bottomPadding = Math.max(32, viewport.h * .045);
-  const headingFontSize = Math.max(80, Math.min(viewport.w * .18, 248));
+  const bottomPadding = Math.max(24, viewport.h * .03);
+  const headingFontSize = Math.max(64, Math.min(viewport.w * .14, 190));
   const headingSpace = headingFontSize * 1.24 + (compact ? 120 : 110);
-  const sidePadding = compact ? 44 : Math.max(64, viewport.w * .045);
-  const scale = Math.min(1.15, (viewport.w - sidePadding * 2) / (maxX - minX));
+  const scale = viewport.w * 1.01 / (maxX-minX);
   const fanHeight = (maxY - minY) * scale;
   const fanAnchorBottom = bottomPadding + maxY * scale;
-  const sectionHeight = Math.max(compact ? 460 : viewport.h, headingSpace + fanHeight + bottomPadding);
+  const sectionHeight = Math.max(viewport.h * (compact ? .82 : 1), headingSpace + fanHeight + bottomPadding);
   const headingTop = 20;
   const contentScale = Math.max(0.75, Math.min(1, scale));
   const imageHeight = Math.round(cardH * 0.5 * contentScale);
@@ -109,51 +106,30 @@ export default function BlogStamps() {
   const bodySize = 9 * contentScale;
   const linkSize = 10 * contentScale;
 
-  useEffect(() => {
-    if (activeIdx !== null) return;
-    const deal = dealRef.current;
-    dealRef.current = false;
-    // The next set is on screen, so the arrows are live again.
-    if (deal) pagingRef.current = false;
+  const renderFan = () => {
+    cardRefs.current.forEach((card, index) => {
+      if (!card) return;
+      const { tx, ty, angle, zIndex } = getCardProps(index, motionRef.current.position);
+      gsap.set(card, { x: tx, y: ty, rotation: angle, scale: 1, zIndex });
+    });
+  };
 
-    order.forEach((cardIdx, slot) => {
-      const el = cardRefs.current[cardIdx];
-      if (!el) return;
-      const { angle, zIndex, tx, ty } = getFanProps(slot);
-
-      if (deal) {
-        gsap.fromTo(
-          el,
-          { y: viewport.h * 0.375, x: 0, rotation: 0, scale: 1, opacity: 0 },
-          {
-            y: ty,
-            x: tx,
-            opacity: 1,
-            rotation: angle,
-            zIndex,
-            duration: 0.75,
-            ease: "back.out(1.5)",
-            delay: 0.15 + slot * 0.09,
-            overwrite: "auto",
-          }
-        );
-      } else {
-        gsap.to(el, {
-          rotation: angle,
-          x: tx,
-          y: ty,
-          scale: 1,
-          opacity: 1,
-          zIndex,
-          duration: 0.55,
-          ease: "back.out(1.4)",
-          delay: slot * 0.03,
-          overwrite: "auto",
-        });
-      }
+  useLayoutEffect(() => {
+    if (activeIdx !== null) { returningFromZoomRef.current = true; return; }
+    const returning = returningFromZoomRef.current;
+    returningFromZoomRef.current = false;
+    gsap.killTweensOf(motionRef.current);
+    motionRef.current.position = page*pageSize;
+    pagingRef.current = false;
+    cardRefs.current.forEach((card, index) => {
+      if (!card) return;
+      const { tx, ty, angle, zIndex } = getCardProps(index, motionRef.current.position);
+      const pose = { x: tx, y: ty, rotation: angle, scale: 1, zIndex };
+      if (returning) gsap.to(card, { ...pose, duration: .55, ease: "power3.out", overwrite: true });
+      else gsap.set(card, pose);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order, activeIdx, page, viewport]);
+  }, [activeIdx, page, viewport]);
 
   const zoomCard = (i: number) => {
     const el = cardRefs.current[i];
@@ -163,23 +139,24 @@ export default function BlogStamps() {
       if (j === i || !c) return;
       const dir = j < i ? -1 : 1;
       gsap.to(c, {
-        x: dir * viewport.w * 0.04,
-        opacity: 0,
-        duration: 0.4,
-        ease: "power2.out",
+        x: dir * (viewport.w/scale + cardW*1.5),
+        duration: .55,
+        ease: "power3.inOut",
       });
     });
     const maxScaleW = (viewport.w * (compact ? 0.8 : 0.72)) / (cardW * scale);
     const maxScaleH = (viewport.h * 0.72) / (cardH * scale);
-    const targetScale = Math.max(1, Math.min(compact ? 3.2 : 1.4, maxScaleW, maxScaleH));
-    const targetY =
-      (cardH * targetScale - sectionHeight / scale) / 2 + fanAnchorBottom / scale;
+    const targetScale = Math.min(compact ? 3.2 : 1.4, maxScaleW, maxScaleH);
+    const sceneTop = fanRef.current?.closest('.blog-reel')?.getBoundingClientRect().top ?? 0;
+    const halfHeight = cardH*targetScale*scale/2;
+    const center = gsap.utils.clamp(halfHeight+24, sectionHeight-halfHeight-24, viewport.h/2-sceneTop);
+    const targetY = (center-sectionHeight+fanAnchorBottom)/scale+cardH*targetScale/2;
     gsap.to(el, {
       x: 0,
       y: targetY,
       rotation: 0,
       scale: targetScale,
-      zIndex: 50,
+      zIndex: 5000,
       duration: 0.55,
       ease: "back.out(1.4)",
     });
@@ -209,7 +186,7 @@ export default function BlogStamps() {
     }
     const slot = order.indexOf(activeIdx);
     if (slot < 0) return;
-    const { angle, zIndex, tx, ty } = getFanProps(slot);
+    const { angle, zIndex, tx, ty } = getCardProps(activeIdx, motionRef.current.position);
     gsap.to(el, {
       x: tx,
       y: ty,
@@ -219,15 +196,14 @@ export default function BlogStamps() {
       duration: 0.55,
       ease: "back.out(1.4)",
     });
-    order.forEach((cardIdx, slotIdx) => {
+    order.forEach((cardIdx) => {
       const c = cardRefs.current[cardIdx];
       if (!c) return;
-      const { angle: oa, zIndex: oz, tx: ox, ty: oy } = getFanProps(slotIdx);
+      const { angle: oa, zIndex: oz, tx: ox, ty: oy } = getCardProps(cardIdx, motionRef.current.position);
       gsap.to(c, {
         x: ox,
         y: oy,
         rotation: oa,
-        opacity: 1,
         zIndex: oz,
         duration: 0.5,
         ease: "power2.out",
@@ -238,11 +214,11 @@ export default function BlogStamps() {
   };
 
   const hoverCard = (cardIdx: number, entering: boolean) => {
-    if (activeIdx !== null) return;
+    if (activeIdx !== null || pagingRef.current || dragRef.current?.locked) return;
     const el = cardRefs.current[cardIdx];
     const slot = order.indexOf(cardIdx);
     if (!el || slot < 0) return;
-    const { ty } = getFanProps(slot);
+    const { ty } = getCardProps(cardIdx, motionRef.current.position);
     gsap.to(el, {
       y: entering ? ty - cardH * 0.05 : ty,
       duration: 0.35,
@@ -252,12 +228,13 @@ export default function BlogStamps() {
 
   const hint =
     activeIdx === null
-      ? "tap a card to read more"
+      ? "drag to browse · tap to read"
       : !isFlipped
         ? "tap again"
         : "";
 
   const handleCardClick = (cardIdx: number) => {
+    if (pagingRef.current) return;
     if (activeIdx === null) zoomCard(cardIdx);
     else if (activeIdx === cardIdx) {
       if (!isFlipped) flipCard(cardIdx);
@@ -268,71 +245,95 @@ export default function BlogStamps() {
     }
   };
 
-  // Sweeps the current set off the way it is travelling, then deals the next
-  // one in. Wraps past either end, so the arrows keep rotating forever.
-  const turnPage = (dir: number) => {
-    const targets = order
-      .map((cardIdx, slot) => ({ el: cardRefs.current[cardIdx], slot }))
-      .filter((target): target is { el: HTMLDivElement; slot: number } =>
-        Boolean(target.el)
-      );
-
-    const deal = () => {
-      dealRef.current = true;
-      setPage((prev) => (prev + dir + PAGE_COUNT) % PAGE_COUNT);
-      setOrder(Array.from({ length: n }, (_, i) => i));
-    };
-
-    if (!targets.length) {
-      pagingRef.current = false;
-      deal();
-      return;
-    }
-
-    pagingRef.current = true;
-    gsap.to(
-      targets.map((target) => target.el),
-      {
-        x: (i: number) => getFanProps(targets[i].slot).tx + dir * viewport.w * 0.16,
-        y: viewport.h * 0.42,
-        rotation: (i: number) => getFanProps(targets[i].slot).angle + dir * 14,
-        opacity: 0,
-        duration: 0.4,
-        ease: "power2.in",
-        stagger: { each: 0.05, from: dir > 0 ? "start" : "end" },
-        overwrite: "auto",
-        onComplete: deal,
-      }
-    );
+  const pagePosition = (nextPage: number, direction?: number) => {
+    const base = page*pageSize;
+    let target = nextPage*pageSize;
+    if (direction === 1 && target <= base) target += blogs.length;
+    else if (direction === -1 && target >= base) target -= blogs.length;
+    else if (direction === undefined) target = base+gsap.utils.wrap(-blogs.length/2, blogs.length/2, target-base);
+    return target;
   };
 
-  const navigate = (dir: number) => {
-    if (pagingRef.current) return;
+  const goToPage = (nextPage: number, direction?: number) => {
+    if (pagingRef.current || activeIdx !== null || nextPage === page) return;
+    pagingRef.current = true;
+    gsap.killTweensOf(cardRefs.current.filter(Boolean));
+    // All cards turn about one shared pivot. Cards below the hand recycle offscreen.
+    gsap.to(motionRef.current, {
+      position: pagePosition(nextPage, direction),
+      duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : .8,
+      ease: "power2.out",
+      overwrite: true,
+      onUpdate: renderFan,
+      onComplete: () => {
+        motionRef.current.position = nextPage*pageSize;
+        renderFan();
+        setPage(nextPage);
+        pagingRef.current = false;
+      },
+    });
+  };
 
-    const step = () => {
-      // With a single page there is nothing to turn to, so shuffle the fan the
-      // way it always did.
-      if (PAGE_COUNT === 1) {
-        setOrder((prev) =>
-          dir < 0
-            ? [...prev.slice(1), prev[0]]
-            : [prev[prev.length - 1], ...prev.slice(0, -1)]
-        );
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    suppressClickRef.current = false;
+    if (activeIdx !== null || pagingRef.current) return;
+    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+      lastX: event.clientX, lastTime: event.timeStamp, velocity: 0, dx: 0, locked: false };
+  };
+
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const dx = event.clientX-drag.startX, dy = event.clientY-drag.startY;
+    if (!drag.locked) {
+      if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) {
+        suppressClickRef.current = true;
+        dragRef.current = null;
         return;
       }
-      turnPage(dir);
-    };
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)*1.2) return;
+      drag.locked = true;
+      suppressClickRef.current = true;
+      gsap.killTweensOf(motionRef.current);
+      gsap.killTweensOf(cardRefs.current.filter(Boolean));
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.currentTarget.classList.add("is-dragging");
+    }
+    const elapsed = Math.max(1, event.timeStamp-drag.lastTime);
+    drag.velocity = .4*drag.velocity+.6*(event.clientX-drag.lastX)/elapsed;
+    drag.lastX = event.clientX;
+    drag.lastTime = event.timeStamp;
+    drag.dx = dx;
+    const direction = dx < 0 ? 1 : -1;
+    const target = pagePosition((page+direction+pageCount)%pageCount, direction);
+    const span = target-page*pageSize;
+    const distance = Math.min(Math.abs(span)*.94, Math.abs(dx)/(viewport.w/(pageSize*.9)));
+    motionRef.current.position = page*pageSize+direction*distance;
+    renderFan();
+  };
 
-    if (activeIdx !== null) {
-      closeZoom();
-      setTimeout(step, 420);
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>, cancelled = false) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    event.currentTarget.classList.remove("is-dragging");
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!drag.locked) return;
+    const velocity = event.timeStamp-drag.lastTime < 120 ? drag.velocity : 0;
+    const threshold = Math.max(44, Math.min(120, viewport.w*.12));
+    const committed = Math.abs(drag.dx) > threshold || (Math.abs(drag.dx) > 18 && Math.abs(velocity) > .45);
+    if (!cancelled && committed && pageCount > 1) {
+      const dir = drag.dx < 0 ? 1 : -1;
+      goToPage((page+dir+pageCount)%pageCount, dir);
     } else {
-      step();
+      gsap.to(motionRef.current, { position: page*pageSize, duration: .45, ease: "power3.out", onUpdate: renderFan, overwrite: true });
     }
   };
 
   return (
     <div
+      className="blog-reel"
       style={{
         width: "100%",
         minHeight: compact ? undefined : "100svh",
@@ -348,14 +349,22 @@ export default function BlogStamps() {
       }}
     >
       <style>{`
-        .blog-fan-card:focus-visible {
+        .blog-reel .events-title { font-size: clamp(64px, 14vw, 190px); }
+        .blog-fan-card:focus-visible, .blog-page-number:focus-visible {
           outline: 2px solid #580a0a;
           outline-offset: 6px;
         }
-        @keyframes blog-hint-in {
-          from { opacity: 0; transform: translateY(0.25rem); }
-          to { opacity: 1; transform: none; }
+        .blog-fan-surface { touch-action: pan-y; cursor: grab; }
+        .blog-fan-surface .blog-fan-card { cursor: inherit; touch-action: pan-y; }
+        .blog-fan-surface.is-dragging, .blog-fan-surface.is-dragging * { cursor: grabbing !important; }
+        .blog-page-number {
+          border: 0; background: none; padding: 0 .65rem; min-width: 44px; min-height: 44px;
+          font: inherit; letter-spacing: .08em; color: inherit; cursor: pointer;
+          color: #9b7770;
         }
+        .blog-page-number:hover, .blog-page-number[aria-current='page'] { color: #580a0a; }
+        .blog-page-number[aria-current='page'] { text-decoration: underline; text-underline-offset: .4em; }
+        .blog-fan-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
       `}</style>
 
       <div
@@ -367,16 +376,14 @@ export default function BlogStamps() {
           alignItems: "center",
           zIndex: 30,
           pointerEvents: "none",
+          visibility: activeIdx !== null ? "hidden" : "visible",
         }}
       >
-        <div style={{
-          filter: activeIdx !== null ? "blur(6px)" : "none",
-          opacity: activeIdx !== null ? .35 : 1,
-          transition: "filter .25s ease, opacity .25s ease",
-        }}>
+        <div>
           <RollingSectionTitle word="BLOGS" sectionId="blogs" staticLetters={2} as="h2" />
         </div>
         <p
+          id="blog-fan-hint"
           key={activeIdx === null ? hint : "zoomed"}
           style={{
             margin: "-0.6rem 0 0",
@@ -386,87 +393,40 @@ export default function BlogStamps() {
             fontSize: "clamp(1.05rem, 1.5vw, 1.35rem)",
             letterSpacing: "0.05em",
             color: "#580a0a",
-            opacity: 0,
-            animation:
-              activeIdx === null && hint
-                ? "blog-hint-in 0.7s ease 0.5s both"
-                : "none",
           }}
         >
           {activeIdx === null && hint ? hint : " "}
         </p>
-        {PAGE_COUNT > 1 && (
-          <p
+        {pageCount > 1 && (
+          <nav
+            aria-label="Blog postcard groups"
             style={{
-              margin: "-0.35rem 0 0",
+              margin: "0.1rem 0 0",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              maxWidth: "calc(100vw - 2rem)",
+              pointerEvents: activeIdx !== null ? "none" : "auto",
+              visibility: activeIdx !== null ? "hidden" : "visible",
               fontFamily: "Kovanov, serif",
               fontWeight: "bold",
               fontSize: "clamp(0.85rem, 1.1vw, 1rem)",
               letterSpacing: "0.16em",
               color: "#580a0a",
-              opacity: activeIdx !== null ? 0 : 1,
-              transition: "opacity 0.25s ease",
             }}
           >
-            {page + 1} / {PAGE_COUNT}
-          </p>
+            {Array.from({ length: pageCount }, (_, index) => <button
+              key={index}
+              type="button"
+              className="blog-page-number"
+              aria-label={`Postcard group ${index+1}`}
+              aria-controls="blog-postcard-fan"
+              aria-current={page === index ? "page" : undefined}
+              onClick={() => goToPage(index)}
+            >{String(index+1).padStart(2, "0")}</button>)}
+          </nav>
         )}
       </div>
-
-      <button
-        onClick={() => navigate(-1)}
-        style={{
-          position: "absolute",
-          left: 0,
-          top: activeIdx !== null ? sectionHeight / 2 : sectionHeight - bottomPadding - fanHeight / 2,
-          transform: "translateY(-50%)",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          zIndex: 60,
-          pointerEvents: "auto",
-          padding: "clamp(0.75rem, 2vw, 1.5rem)",
-          minWidth: "48px",
-          minHeight: "48px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        aria-label="Previous blogs"
-      >
-        <img
-          src={leftArr}
-          alt=""
-          style={{ width: "clamp(1.35rem, 2.2vw, 1.625rem)", aspectRatio: "1 / 1", display: "block" }}
-        />
-      </button>
-      <button
-        onClick={() => navigate(1)}
-        style={{
-          position: "absolute",
-          right: 0,
-          top: activeIdx !== null ? sectionHeight / 2 : sectionHeight - bottomPadding - fanHeight / 2,
-          transform: "translateY(-50%)",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          zIndex: 60,
-          pointerEvents: "auto",
-          padding: "clamp(0.75rem, 2vw, 1.5rem)",
-          minWidth: "48px",
-          minHeight: "48px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        aria-label="Next blogs"
-      >
-        <img
-          src={rightArr}
-          alt=""
-          style={{ width: "clamp(1.35rem, 2.2vw, 1.625rem)", aspectRatio: "1 / 1", display: "block" }}
-        />
-      </button>
 
       {activeIdx !== null && hint && (
         <p
@@ -484,8 +444,6 @@ export default function BlogStamps() {
             fontSize: "clamp(1.1rem, 1.6vw, 1.5rem)",
             letterSpacing: "0.08em",
             color: "#580a0a",
-            opacity: 0,
-            animation: "blog-hint-in 0.7s ease 0.5s both",
             zIndex: 30,
             pointerEvents: "none",
           }}
@@ -507,36 +465,47 @@ export default function BlogStamps() {
       )}
 
       <div
+        id="blog-postcard-fan"
+        ref={fanRef}
+        className="blog-fan-surface"
+        role="group"
+        aria-label="Blog postcards"
+        aria-describedby="blog-fan-hint"
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={event => endDrag(event)}
+        onPointerCancel={event => endDrag(event, true)}
+        onLostPointerCapture={event => endDrag(event, true)}
+        onClickCapture={event => {
+          if (suppressClickRef.current && event.detail !== 0) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
         style={{
           position: "absolute",
           bottom: fanAnchorBottom,
           left: 0,
           right: 0,
           height: fanHeight,
-          pointerEvents: "none",
+          pointerEvents: activeIdx === null ? "auto" : "none",
           zIndex: 20,
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: "50%",
-            width: 0,
-            height: 0,
-            transform: `scale(${scale})`,
-            transformOrigin: "bottom center",
-          }}
-        >
-          {order.map((cardIdx) => {
-            const blog = visible[cardIdx];
-            if (!blog) return null;
+        <div style={{ position: "absolute", bottom: 0, left: "50%", width: 0, height: 0,
+          transform: `scale(${scale})`, transformOrigin: "bottom center" }}>
+          {blogs.map((blog, cardIdx) => {
+            const pose = getCardProps(cardIdx, page*pageSize);
+            const inHand = Math.abs(pose.angle) <= (n-1)*angleStep/2+.1;
             return (
               <div
                 key={blog.id}
                 className="blog-fan-card"
+                data-card-index={cardIdx}
+                aria-hidden={Math.abs(pose.angle) > 90}
+                inert={activeIdx !== null && activeIdx !== cardIdx}
                 role="button"
-                tabIndex={0}
+                tabIndex={activeIdx !== null ? (activeIdx === cardIdx ? 0 : -1) : (inHand ? 0 : -1)}
                 aria-label={`Read ${blog.title}`}
                 ref={(el) => {
                   cardRefs.current[cardIdx] = el;
@@ -562,10 +531,9 @@ export default function BlogStamps() {
                   height: cardH,
                   bottom: 0,
                   left: -cardW / 2,
-                  opacity: 0,
                   transformOrigin: "bottom center",
-                  cursor: "pointer",
-                  pointerEvents: "all",
+                  cursor: activeIdx === null ? undefined : "pointer",
+                  pointerEvents: Math.abs(pose.angle) > 90 || (activeIdx !== null && activeIdx !== cardIdx) ? "none" : "all",
                 }}
               >
                 <div
@@ -713,6 +681,7 @@ export default function BlogStamps() {
                           {blog.body}
                         </p>
                         <a
+                          tabIndex={activeIdx === cardIdx && isFlipped ? 0 : -1}
                           href={blog.link}
                           target="_blank"
                           rel="noreferrer"
@@ -737,6 +706,9 @@ export default function BlogStamps() {
           })}
         </div>
       </div>
+      <span className="blog-fan-status" aria-live="polite" aria-atomic="true">
+        Postcard group {page+1} of {pageCount}
+      </span>
     </div>
   );
 }

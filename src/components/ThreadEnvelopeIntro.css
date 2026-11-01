@@ -1,5 +1,5 @@
 .thread-intro {
-  --scene-width: min(88vw, 960px, 78svh);
+  --scene-width: min(92vw, 1200px, 98svh);
   position: relative; display: grid; place-items: center; isolation: isolate;
   width: 100%; min-height: 520px; height: 100svh; overflow: hidden; color: #650e0c;
   background: #fff9e9;
@@ -47,5 +47,5 @@
 .thread-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes thread-invitation { 0%,100% { opacity: .15; scale: .82; } 50% { opacity: .6; scale: 1.08; } }
 @media(max-width: 600px) { .thread-intro { --scene-width: min(100vw, 78svh); } .thread-hint { gap: 12px; } }
-@media(max-height: 580px) and (min-width: 601px) { .thread-intro { min-height: 360px; --scene-width: min(88vw, 72svh); } .thread-hint { font-size: 18px; } }
+@media(max-height: 580px) and (min-width: 601px) { .thread-intro { min-height: 360px; --scene-width: min(92vw, 88svh); } .thread-hint { font-size: 18px; } }
 @media(prefers-reduced-motion: reduce) { .thread-pull__ring { animation: none; } }

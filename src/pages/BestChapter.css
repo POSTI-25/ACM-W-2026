@@ -1,32 +1,36 @@
 @font-face {
-  font-family: 'Award Gothic';
-  src: url('/fonts/UnifrakturCook-Bold.ttf') format('truetype');
-  font-weight: 700; font-style: normal; font-display: swap;
+  font-family: 'Award Hand';
+  src: url('/fonts/AquilineTwo.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
 }
 .award-scene {
-  --flight-bleed: clamp(120px, 18vh, 200px);
   position: relative; isolation: isolate; width: 100%;
   padding: clamp(1.5rem, 5vh, 3.5rem) clamp(.25rem, 2vw, 2rem) clamp(10rem, 20vh, 13rem);
   overflow: visible;
 }
 .award-banner {
   --paper-progress: 1;
+  --roll-radius: .45;
+  --roll-turn: -680px;
+  --curl-shade: .12;
   /* The exposed sheet and roll share the same contact line, including the
      transparent margins in the original parchment images. */
   --paper-edge: calc(5% + var(--paper-progress) * 89%);
-  --roll-diameter: clamp(32px, 6.5vw, 74px);
-  position: relative; width: min(100%, 1120px); aspect-ratio: 3 / 2;
-  min-height: 380px; margin: 0 auto;
+  --roll-diameter: calc(clamp(36px, 6.5vw, 78px) * var(--roll-radius));
+  position: relative; width: min(100%, 1120px); aspect-ratio: 16 / 9;
+  min-height: 320px; margin: 0 auto;
 }
 .award-sheet {
   position: absolute; inset: 0;
   clip-path: inset(0 0 calc(100% - var(--paper-edge)) 0);
 }
+.award-banner:not([data-unroll='ready']):not([data-unroll='unrolling']) .award-sheet { clip-path: none; }
 .award-sheet::after {
   content: ''; position: absolute; z-index: 1; left: 2%; right: 2%;
-  top: var(--paper-edge); height: calc(var(--roll-diameter) * .65);
+  top: var(--paper-edge); height: calc(var(--roll-diameter) * .9);
   transform: translateY(-100%);
-  background: linear-gradient(transparent, #56301645);
+  background: linear-gradient(transparent 5%, #fce4b34d 48%, #563016b3 100%);
+  opacity: var(--curl-shade);
   pointer-events: none;
 }
 .award-parchment-stock {
@@ -34,26 +38,43 @@
   pointer-events: none; user-select: none;
 }
 .award-inscription {
-  position: absolute; inset: 10% 10% 12%; display: flex;
+  position: absolute; inset: 17% 10% 12%; display: flex;
   flex-direction: column; align-items: center; justify-content: center;
   color: #4f2416; text-align: center;
 }
-.award-flourish { margin-bottom: clamp(.75rem, 2vw, 1.75rem); font: 22px Georgia, serif; color: #7e4d29; }
+.award-chapter-mark {
+  position: absolute; top: 7%; left: 7%; width: clamp(66px, 9vw, 104px);
+  aspect-ratio: 120 / 110; color: #755238; mix-blend-mode: multiply;
+  transform: rotate(-5deg);
+}
+.award-chapter-mark img { position: absolute; left: 29%; top: 29%; width: 43%; height: auto; object-fit: contain; filter: sepia(.8) saturate(.55); opacity: .82; }
+.award-title { width: min(100%, 640px); }
+.award-title__accessible {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.award-engraving { display: block; width: 100%; height: auto; overflow: visible; }
+.award-engraving__ink { fill: #4f2416; stroke: #4f2416; stroke-width: .14; stroke-opacity: .6; stroke-linejoin: round; }
+.award-engraving__gesture { fill: none; stroke: #805235; stroke-width: .75; stroke-linecap: round; opacity: 0; }
+.award-engraving__quill { opacity: 0; pointer-events: none; }
 .award-banner h2 {
-  margin: 0; color: #4f2416; font-family: 'Award Gothic', Georgia, serif;
-  font-weight: 700; font-size: clamp(2.8rem, 7.5vw, 7rem);
+  margin: 0; color: #4f2416; font-family: 'Award Hand', Georgia, serif;
+  font-weight: 400; font-size: clamp(2.8rem, 7.5vw, 6.5rem);
   line-height: 1.05; letter-spacing: -.015em; text-align: center;
   text-shadow: 0 1px 0 #f4ddb344;
 }
-.award-credit { display: flex; align-items: center; gap: clamp(.75rem, 2vw, 2rem); margin-top: clamp(1.25rem, 3vw, 2.75rem); }
+.award-credit { display: flex; align-items: center; gap: clamp(.75rem, 2vw, 2rem); margin-top: clamp(1rem, 2vw, 2rem); }
 .award-credit > span { width: clamp(20px, 4vw, 60px); height: 1px; background: #79502a80; }
 .award-banner p { margin: 0; color: #59301e; font: 400 clamp(1rem, 2vw, 1.5rem)/1.4 Georgia, serif; font-variant: small-caps; letter-spacing: .08em; }
 .award-roll {
   position: absolute; z-index: 3; left: 1.5%; width: 97%;
   top: var(--paper-edge); height: var(--roll-diameter);
-  transform: translateY(-50%) scaleY(calc(1 - var(--paper-progress) * .34));
-  filter: drop-shadow(0 6px 4px #452b223d); pointer-events: none; user-select: none;
+  transform: translate3d(0, -50%, 0);
+  filter: drop-shadow(0 calc(var(--roll-diameter) * .09) calc(var(--roll-diameter) * .07) #452b2247);
+  pointer-events: none; user-select: none;
 }
+.award-banner[data-unroll='unrolling'] .award-sheet { will-change: clip-path; }
+.award-banner[data-unroll='unrolling'] .award-roll { will-change: top, height; }
 .award-roll-stock {
   /* Visible alpha spans y=130..497 of the 724px source. Fit that paper,
      rather than its transparent canvas, to the roll's contact line. */
@@ -62,33 +83,25 @@
 }
 .award-roll-turn {
   position: absolute; inset: 2% 4% 2%; border-radius: 50% / 22%;
-  background: url('../assets/award/aged-parchment.webp') 50% calc(var(--paper-progress) * -520px) / 100% 360%;
+  background: url('../assets/award/aged-parchment.webp') 50% var(--roll-turn) / 100% 360%;
   /* The moving fibers wrap around the cylinder while the ragged end caps
      and fixed curved lighting retain the silhouette of the original asset. */
   mask-image: linear-gradient(90deg, transparent, #000 7% 93%, transparent),
     linear-gradient(transparent, #000 28% 70%, transparent);
   mask-composite: intersect; mix-blend-mode: soft-light; opacity: .65;
 }
+.award-roll::after {
+  content: ''; position: absolute; inset: 3% 4%; border-radius: 50% / 24%;
+  background: linear-gradient(transparent, #fff1c533 24%, transparent 54%, #47261524 82%, transparent);
+  pointer-events: none;
+}
 @media(max-width:600px) {
-  .award-banner { aspect-ratio: 4 / 5; min-height: 390px; }
-  .award-inscription { inset: 12% 9% 14%; }
-  .award-banner h2 { font-size: clamp(2.55rem, 9vw, 3.6rem); line-height: 1.1; }
+  .award-banner { aspect-ratio: 4 / 3; min-height: 260px; }
+  .award-inscription { inset: 24% 9% 10%; }
+  .award-chapter-mark { top: 7%; left: 7%; width: clamp(52px, 14vw, 70px); }
+  .award-title { width: 95%; }
+  .award-banner h2 { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.07; }
+  .award-credit { margin-top: clamp(.75rem, 2.5vw, 1.25rem); }
   .award-banner p { font-size: 1rem; }
 }
 @media(prefers-reduced-motion:reduce) { .award-banner { --paper-progress: 1; } }
-.award-flight {
-  position: absolute;
-  inset: calc(-1 * var(--flight-bleed)) 0;
-  z-index: 1;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-  pointer-events: none;
-}
-.award-flight-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-.award-flight-fallback { position: absolute; top: 12px; right: 14%; width: clamp(50px, 6vw, 76px); height: auto; }
-.award-flight[data-renderer="webgl"] .award-flight-fallback { display: none; }
-.award-flight[data-renderer="fallback"] .award-flight-canvas { visibility: hidden; }
-.award-flight-accents { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.award-flight-accents g { transform-origin: 0 0; transform-box: view-box; }
-.award-flight[data-renderer="fallback"] ~ .award-flight-accents { visibility: hidden; }
