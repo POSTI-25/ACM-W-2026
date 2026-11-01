@@ -61,8 +61,9 @@ export default function BlogStamps() {
     ? Math.min(viewport.w * .75, viewport.h * .5)
     : Math.min(viewport.w * .34, viewport.h * .58);
   const cardH = cardW * 1.25;
-  const angleStep = compact ? 8 : 9.2;
-  const radius = cardW * (compact ? .72 : .9);
+  // A lower pivot and smaller angular step keep the hand broad and gently curved.
+  const angleStep = compact ? 6 : 6.4;
+  const radius = cardW * (compact ? 1.45 : 1.85);
   const fanPose = (offset: number) => {
     const angle = offset*angleStep;
     const radians = angle*Math.PI/180;
