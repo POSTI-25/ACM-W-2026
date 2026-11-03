@@ -8,12 +8,12 @@
 .scroll-section {
   position: relative;
   width: 100%;
-  height: 500vh;
+  height: 700vh;
   overflow: visible;
 }
 
 /* The inner container sticks to the top of the viewport for the whole
-   500vh section natively — no GSAP pin, no pin-spacer, no refresh reflow. */
+   700vh section natively — no GSAP pin, no pin-spacer, no refresh reflow. */
 .scroll-section__pin-container {
   position: sticky;
   top: 0;

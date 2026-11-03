@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 
-/** An independent, real-time drift ending at the sprig's original CSS placement. */
+/** A paused, real-time fall that starts once the sealed envelope has been placed. */
 export function createFooterBotanicalMotion(
   botanical: Element | null,
   ratio: number,
@@ -29,22 +29,16 @@ export function createFooterBotanicalMotion(
   });
   // Alternating banks narrow as the sprig loses height. The final approach
   // slows into contact without a bounce or a change to its resting anchor.
-  tl.to(botanical, {
-    keyframes: [
-      { x: 75 * r, y: -travel * .72, rotation: -4, scale: .96, duration: 1.15, ease: 'sine.out' },
-      { x: -55 * r, y: -travel * .51, rotation: 32, duration: 1.1 },
-      { x: 45 * r, y: -travel * .33, rotation: 2, scale: 1, duration: 1.05 },
-      { x: -22 * r, y: -travel * .17, rotation: 25, duration: 1 },
-      { x: 8 * r, y: -travel * .05, rotation: 12, duration: 1.1 },
-      { x: 0, y: 0, rotation: 16, scale: 1, duration: 1.55, ease: 'power2.out' },
-    ],
-    ease: 'none',
-    defaults: { ease: 'sine.inOut' },
-  }, 0);
+  tl.to(botanical, { x: 75 * r, y: -travel * .72, rotation: -4, scale: .96, duration: 2, ease: 'sine.out' }, 0)
+    .to(botanical, { x: -55 * r, y: -travel * .51, rotation: 32, duration: 1.9, ease: 'sine.inOut' })
+    .to(botanical, { x: 45 * r, y: -travel * .33, rotation: 2, scale: 1, duration: 1.8, ease: 'sine.inOut' })
+    .to(botanical, { x: -22 * r, y: -travel * .17, rotation: 25, duration: 1.7, ease: 'sine.inOut' })
+    .to(botanical, { x: 8 * r, y: -travel * .05, rotation: 12, duration: 1.9, ease: 'sine.inOut' })
+    .to(botanical, { x: 0, y: 0, rotation: 16, scale: 1, duration: 2.7, ease: 'power2.out' });
   tl.to(botanical, {
     filter: 'drop-shadow(1px 3px 2px #39261724)',
-    duration: 2.65,
+    duration: 5,
     ease: 'sine.out',
-  }, 4.3);
+  }, 7);
   return tl;
 }

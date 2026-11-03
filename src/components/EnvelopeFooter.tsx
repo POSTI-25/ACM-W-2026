@@ -5,6 +5,7 @@ import { cooldownRemainingMs } from '../lib/rateLimit';
 import { createFooterSealingMotion } from './footerSealingMotion';
 import { createFooterBotanicalMotion } from './footerBotanicalMotion';
 import { footerEnvelopeGeometry } from './footerEnvelopeGeometry';
+import FooterSealStamp, { type FooterStampHandle } from './FooterSealStamp';
 import './EnvelopeFooter.css';
 import './EnvelopeFooterVintage.css';
 
@@ -18,7 +19,6 @@ import envelopePocketImg from '../assets/footer/envelopePocket.png';
 import insideFlapImg from '../assets/footer/insideFlap.png';
 import outsideFlapImg from '../assets/footer/outsideFlap.png';
 import waxSealImg from '../assets/footer/antique-gold-wax-seal.webp';
-import brassStampImg from '../assets/footer/antique-brass-seal-stamp.webp';
 import driedWildflowerImg from '../assets/footer/dried-wildflower-sprig.webp';
 
 // Social media icons & heart
@@ -195,6 +195,8 @@ export default function EnvelopeFooter() {
   const waxSealRef = useRef<HTMLImageElement>(null);
   const waxContainerRef = useRef<HTMLDivElement>(null);
   const sealStampRef = useRef<HTMLDivElement>(null);
+  const stampAnchorRef = useRef<HTMLDivElement>(null);
+  const stampModelRef = useRef<FooterStampHandle>(null);
 
   // ---- Light cursor on envelope hover ----
   // The site-wide cursor is a dark feather PNG. When hovering over the
@@ -284,16 +286,27 @@ export default function EnvelopeFooter() {
     const waxSeal = waxSealRef.current;
     const waxContainer = waxContainerRef.current;
     const sealStamp = sealStampRef.current;
+    const stampAnchor = stampAnchorRef.current;
     const waxPool = waxContainer?.querySelector<HTMLDivElement>('#wax-pool');
 
     if (
       !section || !pinContainer || !envelopeWrapper ||
       !envelopeInterior || !brownCard || !envelopePocket ||
-      !insideFlap || !outsideFlap || !waxSeal || !waxContainer || !sealStamp || !waxPool || !envelopeShellRef.current
+      !insideFlap || !outsideFlap || !waxSeal || !waxContainer || !sealStamp || !stampAnchor || !waxPool || !envelopeShellRef.current
     ) return;
 
     const envelopeShell = envelopeShellRef.current;
-    let syncFinish: (() => void) | undefined;
+    // Keep the WebGL canvas above the CSS paper planes, centred on their
+    // projected wax point. Its camera follows the same paper angle.
+    const syncStampAnchor = () => {
+      const surface = waxContainer.getBoundingClientRect();
+      const panel = pinContainer.getBoundingClientRect();
+      stampAnchor.style.left = `${surface.left + surface.width / 2 - panel.left}px`;
+      stampAnchor.style.top = `${surface.top + surface.height / 2 - panel.top}px`;
+      stampAnchor.style.width = `${surface.width * 5.5}px`;
+    };
+    let disposed = false;
+    let syncFlower: (() => void) | undefined;
 
     const ctx = gsap.context(() => {
       // ---- Responsive value scaling ----
@@ -370,7 +383,7 @@ export default function EnvelopeFooter() {
       });
 
       // Wrapper: no rotation yet
-      gsap.set(envelopeWrapper, { rotateY: 0, rotateZ: 0, x: 0, y: 0, scale: 1 });
+      gsap.set(envelopeWrapper, { rotateX: 0, rotateY: 0, rotateZ: 0, x: 0, y: 0, scale: 1 });
       const botanical = section.querySelector('.footer-botanical');
       const endnote = section.querySelector('.footer-endnote');
       gsap.set([botanical, endnote], { autoAlpha: 0 });
@@ -383,7 +396,7 @@ export default function EnvelopeFooter() {
           trigger: section,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 0.45,
+          scrub: true,
         },
       });
 
@@ -453,9 +466,10 @@ export default function EnvelopeFooter() {
         ease: 'sine.out',
       }, 'hinge');
 
-      // A short scroll hold gives the closed flap a clear handoff to playback.
+      // Sealing and placing the envelope follow scroll; the flower follows afterwards.
       tl.to({}, { duration: .6 });
       const finish = gsap.timeline({ paused: true, defaults: { ease: 'sine.inOut' } });
+      // Give the stamp more scroll distance while preserving its choreography.
       finish.add(createFooterSealingMotion({
         stamp: sealStamp,
         pool: waxPool,
@@ -466,7 +480,8 @@ export default function EnvelopeFooter() {
         viewportWidth: window.innerWidth,
         envelopeWidth: width,
         reducedMotion,
-      }).paused(false), 0);
+        stampModel: stampModelRef.current,
+      }).timeScale(.75).paused(false), 0);
       finish.addLabel('flatten');
       finish.addLabel('turn', 'flatten+=.35');
 
@@ -481,36 +496,47 @@ export default function EnvelopeFooter() {
       finish.to(envelopeWrapper, {
         rotateZ: -12, x: 16 * r, y: -60 * r,
         scale: window.innerWidth < 600 ? .86 : .94,
-        duration: reducedMotion ? 0 : 1.7,
+        duration: reducedMotion ? 0 : 3.4,
       }, 'turn');
       finish.addLabel('envelope-rest');
       const botanicalFlight = createFooterBotanicalMotion(botanical, r, pinContainer.clientHeight, reducedMotion);
-      botanicalFlight.timeScale(1);
-      finish.add(botanicalFlight.paused(false), 'envelope-rest+=.15');
-      finish.to(endnote, { autoAlpha: 1, duration: reducedMotion ? 0 : 1.2 }, '+=.15');
-      let finishStarted = false;
-      syncFinish = () => {
-        const closed = tl.time() >= tl.labels.closed;
-        if (closed && !finishStarted) {
-          finishStarted = true;
-          finish.restart();
-        } else if (!closed && finishStarted) {
-          // Rewinding to the open flap resets the entire automatic finish.
-          finishStarted = false;
-          finish.pause(0);
+      tl.add(finish.paused(false), '+=.35');
+      const placedAt = finish.startTime() + finish.labels['envelope-rest'];
+      // Preserve the slower scroll pacing, with the envelope resting during the fall.
+      const flowerDelay = reducedMotion ? 0 : .45;
+      const noteDelay = reducedMotion ? 0 : .35;
+      const noteDuration = reducedMotion ? 0 : 1.8;
+      tl.to({}, { duration: flowerDelay + botanicalFlight.duration() + noteDelay + noteDuration + 3.5 });
+
+      const flowerFinish = gsap.timeline({ paused: true });
+      flowerFinish.add(botanicalFlight.paused(false), flowerDelay);
+      flowerFinish.to(endnote, { autoAlpha: 1, duration: noteDuration }, `+=${noteDelay}`);
+      let flowerStarted = false;
+      syncFlower = () => {
+        if (disposed) return;
+        syncStampAnchor();
+        if (tl.time() >= placedAt && !flowerStarted) {
+          flowerStarted = true;
+          flowerFinish.restart();
+        } else if (tl.time() < placedAt && flowerStarted) {
+          // Opening/rewinding the envelope prepares the flower for the next arrival.
+          flowerStarted = false;
+          flowerFinish.pause(0);
           gsap.set([botanical, endnote], { autoAlpha: 0 });
         }
       };
-      tl.eventCallback('onUpdate', syncFinish);
+      tl.eventCallback('onUpdate', syncFlower);
     }, section);
 
     // Rebuilding mid-page: make ScrollTrigger re-measure so the fresh
     // timeline is scrubbed to the current scroll position immediately.
     ScrollTrigger.refresh();
-    // A resize can rebuild directly at the closed pose without an update event.
-    syncFinish?.();
+    syncFlower?.();
+    ScrollTrigger.addEventListener('refresh', syncStampAnchor);
 
     return () => {
+      disposed = true;
+      ScrollTrigger.removeEventListener('refresh', syncStampAnchor);
       ctx.revert();
     };
   }, [wrapperWidth]);
@@ -649,9 +675,6 @@ export default function EnvelopeFooter() {
                       <div id="wax-pool" />
                       {[0, 1, 2, 3].map(drop => <span key={drop} className="wax-drop" />)}
                       <img ref={waxSealRef} className="footer-wax-seal" src={waxSealImg} alt="" draggable={false} />
-                      <div ref={sealStampRef} id="seal-stamp">
-                        <img src={brassStampImg} alt="" draggable={false} />
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -674,6 +697,9 @@ export default function EnvelopeFooter() {
 
           </div>
         </div>
+              <div ref={stampAnchorRef} className="footer-stamp-anchor" aria-hidden="true">
+                <div ref={sealStampRef} id="seal-stamp"><FooterSealStamp ref={stampModelRef}/></div>
+              </div>
               <div className="back-face__content footer-endnote">
                 <div className="back-face__text-block">
                   <div className="back-face__text-row">

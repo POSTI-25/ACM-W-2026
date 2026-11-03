@@ -1,4 +1,5 @@
 import gsap from 'gsap';
+import type { FooterStampHandle, FooterStampPose } from './FooterSealStamp';
 
 type SealingElements = {
   stamp: HTMLDivElement;
@@ -10,16 +11,20 @@ type SealingElements = {
   viewportWidth: number;
   envelopeWidth: number;
   reducedMotion: boolean;
+  stampModel: FooterStampHandle | null;
 };
 
-/** Real-time sealing choreography, composed into the automatic footer finish. */
+/** Scroll-scrubbed sealing. The paper is XY; the press travels along its Z normal. */
 export function createFooterSealingMotion({
   stamp, pool, drops, seal, envelope, ratio: r,
-  viewportWidth, envelopeWidth, reducedMotion,
+  viewportWidth, envelopeWidth, reducedMotion, stampModel,
 }: SealingElements) {
   const tl = gsap.timeline({ paused: true, defaults: { ease: 'sine.inOut' } });
-  // The outside flap's existing .8 scale is the only coordinate conversion.
-  const offscreen = (viewportWidth / 2 + envelopeWidth * .35) / .8;
+  const pose: FooterStampPose = { pitch: .24, yaw: -.28, roll: -.1, lift: 1.5, paperTilt: 0 };
+  const renderPose = () => stampModel?.setPose(pose);
+  renderPose();
+  // Tool motion is in viewport pixels; its anchor follows the projected wax.
+  const offscreen = viewportWidth / 2 + envelopeWidth * .35;
   // Resolve this when each drop starts, after the flap is closed and sticky.
   // Convert the top screen edge into the wax surface's local coordinates;
   // a fixed envelope-relative offset used to make drops appear mid-screen.
@@ -38,9 +43,9 @@ export function createFooterSealingMotion({
   gsap.set(pool, { scale: 0, opacity: 0, transformOrigin: '50% 50%' });
   gsap.set(drops, { opacity: 0, xPercent: -50, yPercent: -50 });
   gsap.set(stamp, {
-    xPercent: -50, yPercent: -100,
+    xPercent: -50, yPercent: -50,
     x: -offscreen, y: -105 * r, rotation: -24,
-    opacity: 0, visibility: 'hidden', transformOrigin: '50% 100%',
+    opacity: 0, visibility: 'hidden', transformOrigin: '50% 50%',
   });
 
   if (reducedMotion) {
@@ -57,6 +62,7 @@ export function createFooterSealingMotion({
     .addLabel('exit', 6.65);
 
   tl.set(stamp, { visibility: 'visible' }, 'entrance');
+  tl.to(pose, { pitch: .35, yaw: .2, roll: 0, duration: 3.6, onUpdate: renderPose }, 'entrance');
   tl.to(stamp, {
     x: -105 * r, y: -105 * r, rotation: -14, opacity: 1,
     duration: 1.4, ease: 'sine.inOut',
@@ -84,9 +90,13 @@ export function createFooterSealingMotion({
   });
 
   tl.to(pool, { borderRadius: '45% 55% 49% 51% / 55% 43% 57% 45%', duration: .45 }, 3.15);
-  tl.to(stamp, { x: 0, y: -95 * r, rotation: 0, duration: .85 }, 'align');
-  // The contact ellipse sits slightly above the image's bottom edge.
-  tl.to(stamp, { y: 12 * r, duration: .55, ease: 'power1.inOut' }, 'press');
+  tl.to(stamp, { x: 0, y: 0, rotation: 0, duration: .85 }, 'align');
+  tl.to(envelope, { rotationX: 30, duration: .85 }, 'align');
+  // Turn about the die centre. PI/2 makes the handle exactly perpendicular
+  // to the envelope and leaves the brass face parallel to the wax.
+  tl.to(pose, { pitch: Math.PI / 2, yaw: 0, roll: 0, paperTilt: Math.PI / 6, duration: .85, onUpdate: renderPose }, 'align');
+  // Once aligned, press only into the paper; no sideways slide or screen-Y drop.
+  tl.to(pose, { lift: 0, duration: .55, ease: 'power1.inOut', onUpdate: renderPose }, 'press');
 
   tl.to(pool, { scaleX: 1.12, scaleY: .94, borderRadius: '43% 57% 46% 54%', duration: .22 }, 'impact');
   tl.to(pool, { scaleX: 1.07, scaleY: 1.03, borderRadius: '49% 51% 47% 53%', duration: .45 }, 5.22);
@@ -97,13 +107,16 @@ export function createFooterSealingMotion({
 
   // The embossed artwork is revealed under the foot while it is pressed.
   tl.to(seal, { opacity: 1, scale: 1, duration: .28 }, 5.33);
-  // A longer press and measured lift let the impression read clearly.
-  tl.to(stamp, { y: -130 * r, duration: 1, ease: 'sine.inOut' }, 'lift');
+  // Hold the normal alignment through contact and the initial clearance lift.
+  tl.to(pose, { lift: 1.5, duration: 1, ease: 'sine.inOut', onUpdate: renderPose }, 'lift');
+  tl.to(pose, { pitch: .35, yaw: -.4, roll: .12, duration: .9, onUpdate: renderPose }, 'lift+=.65');
   tl.to(stamp, {
     x: offscreen, y: -240 * r, rotation: 14, opacity: 0,
     duration: 1.55, ease: 'sine.inOut',
   }, 'exit');
   tl.set(stamp, { visibility: 'hidden' }, 8.2);
+  tl.to(envelope, { rotationX: 0, duration: .7 }, 8.2);
+  tl.to(pose, { paperTilt: 0, duration: .7, onUpdate: renderPose }, 8.2);
 
   return tl;
 }
