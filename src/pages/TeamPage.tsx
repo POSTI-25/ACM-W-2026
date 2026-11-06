@@ -342,6 +342,17 @@ export default function TeamPage() {
 
       const { wide } = conditions;
       const groups = section.querySelectorAll(wide ? "[data-team-row]" : "[data-team-slot]");
+      // Keep the scattered poses stable when scrolling back or resizing.
+      const entries = [
+        { side: -.83, depth: .72, tilt: -6, start: .04, end: .90 },
+        { side: .96, depth: .48, tilt: 7, start: 0, end: .78 },
+        { side: -.37, depth: 1, tilt: 4, start: .14, end: 1 },
+        { side: .58, depth: .83, tilt: -5, start: .09, end: .96 },
+        { side: -1, depth: .60, tilt: 5, start: .03, end: .85 },
+        { side: .24, depth: .92, tilt: -3, start: .18, end: 1 },
+        { side: .75, depth: .65, tilt: 6, start: .07, end: .91 },
+      ];
+      let cardIndex = 0;
       groups.forEach((group) => {
         const cards = group.querySelectorAll(".team-card");
         const rise = gsap.timeline({
@@ -355,18 +366,22 @@ export default function TeamPage() {
           },
         });
 
-        // Start together and let the leading cards settle sooner, like Kalso's collection.
-        cards.forEach((card, index) => {
+        rise.to({}, { duration: 1 }, 0);
+        cards.forEach((card) => {
+          const { side, depth, tilt, start, end } = entries[cardIndex++ % entries.length];
+          const duration = end - start;
+          // Horizontal drift settles first, letting each print rise along a soft curve.
           rise.fromTo(card, {
-            y: () => wide ? gsap.utils.clamp(100, 164, window.innerHeight * 0.21) : 66,
-            x: () => wide ? Math.min(window.innerWidth * 0.026, 36) : 0,
-            rotation: (index - (cards.length - 1) / 2) * 1.8,
+            y: () => depth * Math.min(window.innerHeight * (wide ? .29 : .18), wide ? 210 : 125),
+            rotation: tilt * (wide ? 1 : .65),
           }, {
-            x: 0,
             y: 0,
             rotation: 0,
-            duration: 1 - (cards.length - 1 - index) * 0.14,
-          }, 0);
+            duration,
+          }, start)
+            .fromTo(card, {
+              x: () => side * Math.min(window.innerWidth * (wide ? .085 : .055), wide ? 110 : 24),
+            }, { x: 0, duration: duration * .86, ease: "sine.out" }, start);
         });
       });
     });
