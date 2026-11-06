@@ -17,24 +17,7 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  color: #764e38;
-}
-
-.footer-stationery::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  box-shadow: inset 0 0 120px #78552b1a;
-  background: linear-gradient(104deg, transparent 32%, #fff9e72e 32.2%, transparent 32.5%, transparent 73%, #80654208 73.2%, transparent 73.5%);
-}
-
-.footer-stationery__postmark {
-  position: absolute;
-  top: 14%;
-  right: -2%;
-  width: clamp(240px, 29vw, 430px);
-  opacity: .21;
-  transform: rotate(-16deg);
+  color: var(--route-ink, #4d201e);
 }
 
 .footer-stationery__trail {
@@ -42,16 +25,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: .28;
-}
-
-.footer-stationery__address {
-  position: absolute;
-  bottom: 6%;
-  left: 5%;
-  font: 10px/1.9 'Quicksand', Arial, sans-serif;
-  letter-spacing: .2em;
-  opacity: .65;
+  opacity: .75;
 }
 
 .footer-closing-caption {
@@ -295,8 +269,6 @@
 @media (max-width: 600px) {
   .footer-closing-caption { top: 9%; }
   .footer-closing-caption p { font-size: 8px; letter-spacing: .2em; }
-  .footer-stationery__postmark { top: 23%; right: -25%; width: 240px; opacity: .16; }
-  .footer-stationery__address { font-size: 8px; left: 7%; bottom: 8%; }
   .back-face__signature { font-size: 19px; margin-top: 4px; }
   /* Fit the existing card silhouette; reserve room for the submit button. */
   .brown-card__form { padding: 4% 7%; }
@@ -311,7 +283,6 @@
   .footer-closing-caption p { margin-bottom: 3px; font-size: 8px; }
 }
 
-/* A final still-life accent, outside the envelope's original 3D layers. */
 .footer-botanical {
   position: absolute;
   width: 40%;
@@ -336,16 +307,20 @@
   visibility: hidden;
 }
 .footer-endnote .back-face__text { color: #673627; text-shadow: none; font-size: 15px; }
-.footer-endnote .back-face__signature { color: #764e38; font-size: 25px; }
+.footer-endnote .back-face__signature {
+  font: italic 400 32px/1.3 Georgia, 'Times New Roman', serif;
+  letter-spacing: -.025em;
+  color: #673f2f;
+}
 .footer-endnote .back-face__social-icon,
 .footer-endnote .back-face__heart { filter: brightness(.4) sepia(1) saturate(2); }
 .footer-endnote .back-face__social-icon { width: 21px; height: 21px; }
 .footer-endnote .back-face__social-row { gap: 20px; }
 @media (max-width: 600px) {
-  .footer-botanical { left: 2%; top: -6%; width: 38%; }
+  .footer-botanical { width: 38%; }
   .footer-endnote.back-face__content { bottom: 6%; gap: 10px; }
   .footer-endnote .back-face__text { font-size: 12px; }
-  .footer-endnote .back-face__signature { font-size: 22px; }
+  .footer-endnote .back-face__signature { font-size: 26px; }
 }
 @media (max-height: 500px) {
   .footer-endnote.back-face__content { bottom: 2%; gap: 5px; }
@@ -353,12 +328,5 @@
 }
 
 @media (max-width: 600px) {
-  .footer-stationery__address {
-    bottom: 2%;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 6.5px;
-  }
   .footer-endnote.back-face__content { bottom: 9%; }
 }

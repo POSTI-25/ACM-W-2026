@@ -24,6 +24,12 @@ const flourish = `M${left - 32} 288
   C${at(.76)} 164 ${at(.765)} 108 ${at(.805)} 116
   S${at(.915)} 157 ${right + 28} 92`;
 
+export function EventsInkTrail() {
+  return <svg className="journey-flourish" viewBox={`${left - 40} 0 ${span + 80} 320`} fill="none" focusable="false">
+    <path className="journey-flourish-ink" data-route-reveal d={flourish} pathLength="1" strokeDasharray="1" />
+  </svg>;
+}
+
 /** One continuous flourish releases a trailing, left-to-right seep of ink. */
 export default function EventsQuill() {
   const root = useRef<SVGSVGElement>(null);

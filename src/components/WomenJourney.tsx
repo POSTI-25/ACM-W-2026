@@ -45,20 +45,6 @@ export default function WomenJourney() {
   }, []);
 
   return <div className="stem-globe-journey">
-    <div className="stem-journey-paper" aria-hidden="true">
-      <div aria-hidden="true" style={{
-        position: "absolute", inset: 0,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='0.12'/%3E%3C/svg%3E")`,
-        backgroundRepeat: "repeat", backgroundSize: "18.75rem 18.75rem", mixBlendMode: "multiply",
-        pointerEvents: "none", zIndex: 0,
-      }} />
-      <div aria-hidden="true" style={{
-        position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(110,50,15,0.16) 100%)",
-        pointerEvents: "none", zIndex: 1,
-      }} />
-
-    </div>
     <div className="globe-sticky-container stem-shared-globe" aria-hidden="true">
       <div ref={introRef} className="stem-globe-intro">
         <div ref={globeMotionRef} className="globe-stage">

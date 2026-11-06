@@ -454,23 +454,7 @@ export default function ContributorsSection() {
 
   return (
     <section ref={sectionRef} className="relative w-full overflow-hidden bg-[#B49880] py-16 sm:py-20">
-      <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-25 mix-blend-multiply"
-        style={{
-          backgroundImage:
-            "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"160\" height=\"160\" viewBox=\"0 0 160 160\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.8\" numOctaves=\"2\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"160\" height=\"160\" filter=\"url(%23n)\" opacity=\"0.5\"/%3E%3C/svg%3E')",
-          backgroundRepeat: "repeat",
-        }}
-      />
-
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-6">
-        <h2
-          className="text-center text-[32px] font-bold tracking-[0.08em] sm:text-[40px]"
-          style={{ fontFamily: "Kovanov, Georgia, serif", color: "#580A0A" }}
-        >
-          CONTRIBUTORS
-        </h2>
-
         <div
           ref={scrollRef}
           className="mt-12 w-full"

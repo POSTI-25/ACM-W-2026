@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -322,34 +322,56 @@ const teamData: TeamMember[] = [
 ];
 
 export default function TeamPage() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const rows = useMemo(() => {
     const rowSet = new Set(teamData.map((member) => member.row));
     return Array.from(rowSet).sort((a, b) => a - b);
   }, []);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray<HTMLElement>(".team-card");
-      gsap.from(cards, {
-        opacity: 0,
-        y: 50,
-        duration: 0.8,
-        ease: "power3.out",
-        stagger: 0.1,
-        immediateRender: false,
-        clearProps: "transform",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 75%",
-          toggleActions: "play none none none",
-          once: true,
-        },
-      });
-    }, sectionRef);
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
 
-    return () => ctx.revert();
+    const media = gsap.matchMedia(section);
+    media.add({
+      motion: "(prefers-reduced-motion: no-preference)",
+      wide: "(min-width: 48rem)",
+    }, ({ conditions }) => {
+      if (!conditions?.motion) return;
+
+      const { wide } = conditions;
+      const groups = section.querySelectorAll(wide ? "[data-team-row]" : "[data-team-slot]");
+      groups.forEach((group) => {
+        const cards = group.querySelectorAll(".team-card");
+        const rise = gsap.timeline({
+          defaults: { ease: "sine.inOut" },
+          scrollTrigger: {
+            trigger: group,
+            start: "top 112%",
+            end: wide ? "top 31%" : "top 42%",
+            scrub: 0.48,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        // Start together and let the leading cards settle sooner, like Kalso's collection.
+        cards.forEach((card, index) => {
+          rise.fromTo(card, {
+            y: () => wide ? gsap.utils.clamp(100, 164, window.innerHeight * 0.21) : 66,
+            x: () => wide ? Math.min(window.innerWidth * 0.026, 36) : 0,
+            rotation: (index - (cards.length - 1) / 2) * 1.8,
+          }, {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            duration: 1 - (cards.length - 1 - index) * 0.14,
+          }, 0);
+        });
+      });
+    });
+
+    return () => media.revert();
   }, []);
 
   return (
@@ -357,27 +379,7 @@ export default function TeamPage() {
       ref={sectionRef}
       className="relative w-full overflow-visible bg-[#B49880] py-16 text-[#580A0A] sm:py-20"
     >
-      <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-25 mix-blend-multiply"
-        style={{
-          backgroundImage:
-            "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"160\" height=\"160\" viewBox=\"0 0 160 160\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.8\" numOctaves=\"2\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"160\" height=\"160\" filter=\"url(%23n)\" opacity=\"0.5\"/%3E%3C/svg%3E')",
-          backgroundRepeat: "repeat",
-        }}
-      />
-
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-6">
-        <h2
-          className="text-center text-[clamp(2rem,5vw,2.5rem)] font-bold tracking-[0.08em]"
-          style={{
-            fontFamily: "Kovanov, Georgia, serif",
-            fontWeight: 700,
-            color: "#580A0A",
-          }}
-        >
-          THE TEAM
-        </h2>
-
         <div className="mt-12 flex w-full flex-col gap-10">
           {rows.map((row) => {
             const rowMembers = teamData.filter(
@@ -388,17 +390,23 @@ export default function TeamPage() {
               <div
                 key={row}
                 id={row === 1 ? "faculty-coordinator" : undefined}
+                data-team-row
                 className="flex flex-col items-center gap-6 md:flex-row md:justify-center md:gap-8"
               >
                 {rowMembers.map((member) => (
-                  <ProfileCard
+                  <div
                     key={member.name}
-                    name={member.name}
-                    role={member.role}
-                    imageSrc={imageMap[member.imageSrc]}
-                    primaryLink={member.primaryLink}
-                    secondaryLink={member.secondaryLink}
-                  />
+                    data-team-slot
+                    className="min-w-0 w-[min(92vw,26.25rem)] sm:w-[min(42vw,26.25rem)]"
+                  >
+                    <ProfileCard
+                      name={member.name}
+                      role={member.role}
+                      imageSrc={imageMap[member.imageSrc]}
+                      primaryLink={member.primaryLink}
+                      secondaryLink={member.secondaryLink}
+                    />
+                  </div>
                 ))}
               </div>
             );

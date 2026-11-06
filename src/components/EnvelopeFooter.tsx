@@ -36,25 +36,6 @@ import featherCursorImg from '../assets/feather-cursor.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function PostalMark({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 320 180" fill="none" aria-hidden="true" focusable="false">
-      <g stroke="currentColor" strokeWidth="1.1">
-        <circle cx="90" cy="90" r="66" />
-        <circle cx="90" cy="90" r="59" strokeDasharray="2 3" />
-        <path d="M145 63c25-18 38 18 64 0s39 18 65 0M151 78c25-18 38 18 64 0s39 18 65 0M153 93c25-18 38 18 64 0s39 18 65 0M150 108c25-18 38 18 64 0s39 18 65 0" />
-        <path d="M57 97h66M67 65h46" strokeWidth=".7" />
-      </g>
-      <g fill="currentColor" textAnchor="middle" fontFamily="Georgia, serif">
-        <text x="90" y="88" fontSize="20" letterSpacing="2">ACM-W</text>
-        <text x="90" y="116" fontSize="9" letterSpacing="2">VELLORE</text>
-        <text x="90" y="52" fontSize="7" letterSpacing="1.8">SPECIAL DELIVERY</text>
-        <text x="90" y="138" fontSize="7" letterSpacing="1.5">WITH CURIOSITY</text>
-      </g>
-    </svg>
-  );
-}
-
 export default function EnvelopeFooter() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinContainerRef = useRef<HTMLDivElement>(null);
@@ -384,8 +365,8 @@ export default function EnvelopeFooter() {
 
       // Wrapper: no rotation yet
       gsap.set(envelopeWrapper, { rotateX: 0, rotateY: 0, rotateZ: 0, x: 0, y: 0, scale: 1 });
-      const botanical = section.querySelector('.footer-botanical');
       const endnote = section.querySelector('.footer-endnote');
+      const botanical = section.querySelector('.footer-botanical');
       gsap.set([botanical, endnote], { autoAlpha: 0 });
 
       // Keep the existing geometry and 3D depth ordering. Only the rhythm
@@ -466,7 +447,7 @@ export default function EnvelopeFooter() {
         ease: 'sine.out',
       }, 'hinge');
 
-      // Sealing and placing the envelope follow scroll; the flower follows afterwards.
+      // Sealing and placing the envelope follow scroll.
       tl.to({}, { duration: .6 });
       const finish = gsap.timeline({ paused: true, defaults: { ease: 'sine.inOut' } });
       // Give the stamp more scroll distance while preserving its choreography.
@@ -499,28 +480,25 @@ export default function EnvelopeFooter() {
         duration: reducedMotion ? 0 : 3.4,
       }, 'turn');
       finish.addLabel('envelope-rest');
-      const botanicalFlight = createFooterBotanicalMotion(botanical, r, pinContainer.clientHeight, reducedMotion);
       tl.add(finish.paused(false), '+=.35');
       const placedAt = finish.startTime() + finish.labels['envelope-rest'];
-      // Preserve the slower scroll pacing, with the envelope resting during the fall.
-      const flowerDelay = reducedMotion ? 0 : .45;
-      const noteDelay = reducedMotion ? 0 : .35;
-      const noteDuration = reducedMotion ? 0 : 1.8;
-      tl.to({}, { duration: flowerDelay + botanicalFlight.duration() + noteDelay + noteDuration + 3.5 });
+      // Retain the scroll distance allotted to folding and sealing.
+      tl.to({}, { duration: reducedMotion ? 3.5 : 18.1 });
 
+      // Once placed, the envelope stays still while the flower falls in real time.
+      const botanicalFlight = createFooterBotanicalMotion(botanical, r, pinContainer.clientHeight, reducedMotion);
       const flowerFinish = gsap.timeline({ paused: true });
-      flowerFinish.add(botanicalFlight.paused(false), flowerDelay);
-      flowerFinish.to(endnote, { autoAlpha: 1, duration: noteDuration }, `+=${noteDelay}`);
+      flowerFinish.add(botanicalFlight.paused(false), reducedMotion ? 0 : .45);
+      flowerFinish.to(endnote, { autoAlpha: 1, duration: reducedMotion ? 0 : 1.8 }, reducedMotion ? '+=0' : '+=.35');
       let flowerStarted = false;
       syncFlower = () => {
         if (disposed) return;
         syncStampAnchor();
-        if (tl.time() >= placedAt && !flowerStarted) {
-          flowerStarted = true;
-          flowerFinish.restart();
-        } else if (tl.time() < placedAt && flowerStarted) {
-          // Opening/rewinding the envelope prepares the flower for the next arrival.
-          flowerStarted = false;
+        const placed = tl.time() >= placedAt;
+        if (placed === flowerStarted) return;
+        flowerStarted = placed;
+        if (placed) flowerFinish.restart();
+        else {
           flowerFinish.pause(0);
           gsap.set([botanical, endnote], { autoAlpha: 0 });
         }
@@ -545,12 +523,9 @@ export default function EnvelopeFooter() {
     <section ref={sectionRef} className="scroll-section" id="contact">
       <div ref={pinContainerRef} className="scroll-section__pin-container">
         <div className="footer-stationery" aria-hidden="true">
-          <PostalMark className="footer-stationery__postmark" />
           <svg className="footer-stationery__trail" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none" focusable="false">
-            <path d="M-80 700C130 870 340 780 290 650S60 575 90 725C120 900 480 860 660 760S1060 730 1240 550s20-380 300-430" stroke="currentColor" strokeWidth="1" strokeDasharray="4 8" />
-            <path d="m125 598 144 35-100 100-9-69-35-66Zm35 66 109-31-90 47-10 53" stroke="currentColor" strokeWidth="1" />
+            <path d="M-80 700C130 870 340 780 290 650S60 575 90 725C120 900 480 860 660 760S1060 730 1240 550s20-380 300-430" stroke="currentColor" strokeWidth="1.4" strokeDasharray="4 8" vectorEffect="non-scaling-stroke" />
           </svg>
-          <span className="footer-stationery__address">ACM-W CORRESPONDENCE<br />VIT · VELLORE, INDIA</span>
         </div>
         <div className="footer-closing-caption">
           <p>WITH CURIOSITY, ALWAYS</p>
@@ -558,7 +533,7 @@ export default function EnvelopeFooter() {
         </div>
         <div className="scene">
           <img className="footer-botanical" src={driedWildflowerImg} width={1024} height={1536}
-            alt="" aria-hidden="true" draggable={false} loading="lazy" decoding="async" />
+            alt="" aria-hidden="true" draggable={false} loading="eager" decoding="async" />
           <div ref={envelopeWrapperRef} className="envelope-wrapper">
 
             {/* ========== FRONT FACE ========== */}

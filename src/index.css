@@ -37,9 +37,13 @@
 
 html {
   cursor: url("./assets/feather-cursor.png") 4 4, auto;
-  /* Browser-native smooth scrolling for in-page anchors / nav. */
-  scroll-behavior: smooth;
+  /* Menu links supply their own easing through the shared scroll controller. */
+  scroll-behavior: auto;
 }
+
+/* Lenis owns wheel and menu easing. A second browser animation would fight
+   its frame-by-frame native scroll updates. Sticky scenes stay native. */
+html.lenis { scroll-behavior: auto !important; }
 
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -80,6 +84,7 @@ body {
 
 /* `clip` hides horizontal bleed without becoming a scroll container. */
 .site-main {
+  --route-ink: #4d201e;
   overflow-x: clip;
 }
 

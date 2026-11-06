@@ -1,9 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { blogs } from "../data/blogs";
-import { RollingSectionTitle } from "../components/EventsTitle";
 import StampBorder from "../components/StampBorder";
+import { TRANSITION_SCRUB } from "../lib/smoothScroll";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function BlogStamps() {
   // Seeded from the real viewport so the first layout pass is already
@@ -17,12 +20,11 @@ export default function BlogStamps() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [requestedPage, setPage] = useState(0);
   const compact = viewport.w < 768;
-  const pageSize = compact ? 4 : 8;
+  const pageSize = compact ? 3 : 7;
   const pageCount = Math.max(1, Math.ceil(blogs.length/pageSize));
   const page = Math.min(requestedPage, pageCount-1);
   const visible = blogs;
   const n = Math.min(pageSize, blogs.length);
-  const order = blogs.map((_, index) => index);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const motionRef = useRef({ position: 0 });
   const pagingRef = useRef(false);
@@ -33,6 +35,21 @@ export default function BlogStamps() {
     pointerId: number; startX: number; startY: number;
     lastX: number; lastTime: number; velocity: number; dx: number; locked: boolean;
   } | null>(null);
+
+  useLayoutEffect(() => {
+    const fan = fanRef.current;
+    const reel = fan?.closest('.blog-reel');
+    if (!fan || !reel) return;
+    const media = gsap.matchMedia();
+    media.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.fromTo(fan, { y: () => Math.min(innerHeight * .09, 80) }, {
+        y: 0, ease: 'none',
+        scrollTrigger: { trigger: reel, start: 'top 110%', end: 'top 25%', scrub: TRANSITION_SCRUB,
+          invalidateOnRefresh: true },
+      });
+    }, reel);
+    return () => media.revert();
+  }, []);
 
   useEffect(() => {
     let previousWidth = window.innerWidth;
@@ -61,9 +78,17 @@ export default function BlogStamps() {
     ? Math.min(viewport.w * .75, viewport.h * .5)
     : Math.min(viewport.w * .34, viewport.h * .58);
   const cardH = cardW * 1.25;
-  // A lower pivot and smaller angular step keep the hand broad and gently curved.
-  const angleStep = compact ? 6 : 6.4;
-  const radius = cardW * (compact ? 1.45 : 1.85);
+  // A distant shared pivot opens the hand into a broad, shallow circular arc.
+  const angleStep = compact ? 9 : 8.5;
+  const radius = cardW * (compact ? 3 : 4);
+  const handEdge = (n-1)/2;
+  const fadeEdge = handEdge + .65;
+  // Keep the approved central five at the same size and angles. The extra
+  // desktop cards extend that arc instead of shrinking the entire hand.
+  const layoutCount = Math.min(compact ? 3 : 5, blogs.length);
+  const layoutEdge = (layoutCount-1)/2;
+  const layoutFadeEdge = layoutEdge + .65;
+  const addedLeftCards = compact ? 0 : (n-layoutCount)/2;
   const fanPose = (offset: number) => {
     const angle = offset*angleStep;
     const radians = angle*Math.PI/180;
@@ -72,46 +97,65 @@ export default function BlogStamps() {
       tx: radius*Math.sin(radians),
       ty: radius*(1-Math.cos(radians)),
       zIndex: Math.abs(angle) < 85 ? 1000+Math.round(angle*10) : 0,
+      opacity: gsap.utils.clamp(0, 1, (fadeEdge-Math.abs(offset))/(fadeEdge-handEdge)),
     };
   };
-  const getFanProps = (slot: number) => fanPose(slot-(n-1)/2);
   const getCardProps = (index: number, position: number) =>
-    fanPose(gsap.utils.wrap(-blogs.length/2, blogs.length/2, index-position-(n-1)/2));
-  // Measure the rotated corners, including the lowest outer stamp corners.
-  // The old bottom anchor sat below the section and cropped the whole fan.
-  const corners = Array.from({ length: n }, (_, slot) => {
-    const { angle: degrees, tx, ty } = getFanProps(slot);
+    fanPose(gsap.utils.wrap(-blogs.length/2, blogs.length/2, index-position-handEdge+addedLeftCards));
+  // Reserve the complete swept envelope, including cards fading at the edges
+  // during a drag. Measuring just the resting slots crops the rotating corners.
+  const cardCorners = (offset: number) => {
+    const { angle: degrees, tx, ty } = fanPose(offset);
     const angle = degrees * Math.PI / 180;
     return [-cardW / 2, cardW / 2].flatMap(x => [-cardH, 0].map(y => ({
       x: tx + x * Math.cos(angle) - y * Math.sin(angle),
       y: ty + x * Math.sin(angle) + y * Math.cos(angle),
     })));
-  }).flat();
-  const minX = Math.min(...corners.map(p => p.x));
-  const maxX = Math.max(...corners.map(p => p.x));
-  const minY = Math.min(...corners.map(p => p.y));
+  };
+  const corners = Array.from({ length: 81 }, (_, sample) =>
+    cardCorners(-fadeEdge+2*fadeEdge*sample/80)).flat();
+  const layoutCorners = Array.from({ length: 81 }, (_, sample) =>
+    cardCorners(-layoutFadeEdge+2*layoutFadeEdge*sample/80)).flat();
+  const restingCorners = Array.from({ length: layoutCount }, (_, slot) => cardCorners(slot-layoutEdge)).flat();
+  const minX = Math.min(...restingCorners.map(p => p.x));
+  const maxX = Math.max(...restingCorners.map(p => p.x));
+  const minY = Math.min(...layoutCorners.map(p => p.y)) - cardH*.06;
   const maxY = Math.max(...corners.map(p => p.y));
-  const bottomPadding = Math.max(24, viewport.h * .03);
-  const headingFontSize = Math.max(64, Math.min(viewport.w * .14, 190));
-  const headingSpace = headingFontSize * 1.24 + (compact ? 120 : 110);
-  const scale = viewport.w * 1.01 / (maxX-minX);
+  const layoutMaxY = Math.max(...layoutCorners.map(p => p.y));
+  const bottomPadding = Math.max(32, viewport.h * .05);
+  const sidePadding = compact ? 16 : Math.max(32, viewport.w*.035);
+  const controlsSpace = compact ? 172 : 110;
+  // Give the desktop hand a little more presence while retaining seven cards.
+  const scale = (compact ? 1 : 1.08) * Math.min(1,
+    (viewport.w-2*sidePadding)/(maxX-minX),
+    Math.max(160, viewport.h-controlsSpace-bottomPadding)/(layoutMaxY-minY));
   const fanHeight = (maxY - minY) * scale;
   const fanAnchorBottom = bottomPadding + maxY * scale;
-  const sectionHeight = Math.max(viewport.h * (compact ? .82 : 1), headingSpace + fanHeight + bottomPadding);
+  const sectionHeight = Math.max(viewport.h * (compact ? .6 : .85),
+    controlsSpace + (layoutMaxY-minY)*scale + bottomPadding) + (maxY-layoutMaxY)*scale;
   const headingTop = 20;
-  const contentScale = Math.max(0.75, Math.min(1, scale));
-  const imageHeight = Math.round(cardH * 0.5 * contentScale);
+  // Compensate gently for the scene scale so compact cards keep legible type.
+  const contentScale = Math.min(1.5, Math.max(1, 1/Math.sqrt(scale)));
+  const imageHeight = Math.round(cardH * 0.5);
   const titleSize = 14 * contentScale;
   const authorSize = 10 * contentScale;
   const metaSize = 8 * contentScale;
   const bodySize = 9 * contentScale;
   const linkSize = 10 * contentScale;
 
+  const updateCardAccess = (card: HTMLDivElement, opacity: number) => {
+    const shown = opacity > .001;
+    card.setAttribute('aria-hidden', String(!shown));
+    card.inert = !shown;
+    card.tabIndex = opacity > .99 ? 0 : -1;
+  };
+
   const renderFan = () => {
     cardRefs.current.forEach((card, index) => {
       if (!card) return;
-      const { tx, ty, angle, zIndex } = getCardProps(index, motionRef.current.position);
-      gsap.set(card, { x: tx, y: ty, rotation: angle, scale: 1, zIndex });
+      const { tx, ty, angle, zIndex, opacity } = getCardProps(index, motionRef.current.position);
+      gsap.set(card, { x: tx, y: ty, rotation: angle, scale: 1, zIndex, autoAlpha: opacity });
+      updateCardAccess(card, opacity);
     });
   };
 
@@ -124,8 +168,9 @@ export default function BlogStamps() {
     pagingRef.current = false;
     cardRefs.current.forEach((card, index) => {
       if (!card) return;
-      const { tx, ty, angle, zIndex } = getCardProps(index, motionRef.current.position);
-      const pose = { x: tx, y: ty, rotation: angle, scale: 1, zIndex };
+      const { tx, ty, angle, zIndex, opacity } = getCardProps(index, motionRef.current.position);
+      const pose = { x: tx, y: ty, rotation: angle, scale: 1, zIndex, autoAlpha: opacity };
+      updateCardAccess(card, opacity);
       if (returning) gsap.to(card, { ...pose, duration: .55, ease: "power3.out", overwrite: true });
       else gsap.set(card, pose);
     });
@@ -141,6 +186,7 @@ export default function BlogStamps() {
       const dir = j < i ? -1 : 1;
       gsap.to(c, {
         x: dir * (viewport.w/scale + cardW*1.5),
+        autoAlpha: 0,
         duration: .55,
         ease: "power3.inOut",
       });
@@ -158,8 +204,10 @@ export default function BlogStamps() {
       rotation: 0,
       scale: targetScale,
       zIndex: 5000,
+      autoAlpha: 1,
       duration: 0.55,
       ease: "back.out(1.4)",
+      overwrite: true,
     });
     setActiveIdx(i);
     setIsFlipped(false);
@@ -174,6 +222,7 @@ export default function BlogStamps() {
       rotationY: 180,
       duration: 0.65,
       ease: "power2.inOut",
+      overwrite: true,
     });
     setIsFlipped(true);
   };
@@ -183,33 +232,10 @@ export default function BlogStamps() {
     const el = cardRefs.current[activeIdx];
     const inner = el?.querySelector<HTMLDivElement>(".stamp-inner");
     if (inner) {
-      gsap.to(inner, { rotationY: 0, duration: 0.4, ease: "power2.inOut" });
+      gsap.to(inner, { rotationY: 0, duration: 0.4, ease: "power2.inOut", overwrite: true });
     }
-    const slot = order.indexOf(activeIdx);
-    if (slot < 0) return;
-    const { angle, zIndex, tx, ty } = getCardProps(activeIdx, motionRef.current.position);
-    gsap.to(el, {
-      x: tx,
-      y: ty,
-      rotation: angle,
-      scale: 1,
-      zIndex,
-      duration: 0.55,
-      ease: "back.out(1.4)",
-    });
-    order.forEach((cardIdx) => {
-      const c = cardRefs.current[cardIdx];
-      if (!c) return;
-      const { angle: oa, zIndex: oz, tx: ox, ty: oy } = getCardProps(cardIdx, motionRef.current.position);
-      gsap.to(c, {
-        x: ox,
-        y: oy,
-        rotation: oa,
-        zIndex: oz,
-        duration: 0.5,
-        ease: "power2.out",
-      });
-    });
+    // The layout effect returns the visible hand and hides the rest of the
+    // archive together, using exactly the same poses as paging and dragging.
     setActiveIdx(null);
     setIsFlipped(false);
   };
@@ -217,8 +243,7 @@ export default function BlogStamps() {
   const hoverCard = (cardIdx: number, entering: boolean) => {
     if (activeIdx !== null || pagingRef.current || dragRef.current?.locked) return;
     const el = cardRefs.current[cardIdx];
-    const slot = order.indexOf(cardIdx);
-    if (!el || slot < 0) return;
+    if (!el) return;
     const { ty } = getCardProps(cardIdx, motionRef.current.position);
     gsap.to(el, {
       y: entering ? ty - cardH * 0.05 : ty,
@@ -337,7 +362,6 @@ export default function BlogStamps() {
       className="blog-reel"
       style={{
         width: "100%",
-        minHeight: compact ? undefined : "100svh",
         height: sectionHeight,
         background: "#FFF9E9",
         fontFamily: "'Georgia', serif",
@@ -350,7 +374,6 @@ export default function BlogStamps() {
       }}
     >
       <style>{`
-        .blog-reel .events-title { font-size: clamp(64px, 14vw, 190px); }
         .blog-fan-card:focus-visible, .blog-page-number:focus-visible {
           outline: 2px solid #580a0a;
           outline-offset: 6px;
@@ -380,14 +403,11 @@ export default function BlogStamps() {
           visibility: activeIdx !== null ? "hidden" : "visible",
         }}
       >
-        <div>
-          <RollingSectionTitle word="BLOGS" sectionId="blogs" staticLetters={2} as="h2" />
-        </div>
         <p
           id="blog-fan-hint"
           key={activeIdx === null ? hint : "zoomed"}
           style={{
-            margin: "-0.6rem 0 0",
+            margin: "0",
             fontFamily: "Kovanov, serif",
             fontStyle: "normal",
             fontWeight: "bold",
@@ -503,8 +523,8 @@ export default function BlogStamps() {
                 key={blog.id}
                 className="blog-fan-card"
                 data-card-index={cardIdx}
-                aria-hidden={Math.abs(pose.angle) > 90}
-                inert={activeIdx !== null && activeIdx !== cardIdx}
+                aria-hidden={pose.opacity === 0 || (activeIdx !== null && activeIdx !== cardIdx)}
+                inert={pose.opacity === 0 || (activeIdx !== null && activeIdx !== cardIdx)}
                 role="button"
                 tabIndex={activeIdx !== null ? (activeIdx === cardIdx ? 0 : -1) : (inHand ? 0 : -1)}
                 aria-label={`Read ${blog.title}`}
@@ -534,7 +554,9 @@ export default function BlogStamps() {
                   left: -cardW / 2,
                   transformOrigin: "bottom center",
                   cursor: activeIdx === null ? undefined : "pointer",
-                  pointerEvents: Math.abs(pose.angle) > 90 || (activeIdx !== null && activeIdx !== cardIdx) ? "none" : "all",
+                  opacity: pose.opacity,
+                  visibility: pose.opacity > 0 ? "visible" : "hidden",
+                  pointerEvents: activeIdx !== null && activeIdx !== cardIdx ? "none" : "all",
                 }}
               >
                 <div

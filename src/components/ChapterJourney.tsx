@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './ChapterJourney.css';
-import EventsQuill from './EventsQuill';
+import { EventsInkTrail } from './EventsQuill';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -43,72 +43,28 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
 
   useLayoutEffect(() => {
     const element = root.current;
-    const events = element?.querySelector<HTMLElement>('#events');
-    if (!element || !events) return;
-    const measure = () => {
-      const y = events.offsetTop + innerHeight * .24;
-      const radius = Math.hypot(element.clientWidth / 2, Math.max(y, element.offsetHeight - y));
-      element.style.setProperty('--journey-events-y', `${events.offsetTop}px`);
-      element.style.setProperty('--journey-portal-y', `${y}px`);
-      element.style.setProperty('--journey-diameter', `${Math.ceil(radius * 2 + 80)}px`);
-    };
-    measure();
-    const resize = new ResizeObserver(measure);
-    resize.observe(element);
+    if (!element) return;
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const select = gsap.utils.selector(element);
-      const colorReveal = gsap.timeline({
-        defaults: { ease: 'sine.inOut' },
-        // One continuous timeline retraces on upward scroll; no one-shot resets.
-        scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -85%', scrub: 1.6, invalidateOnRefresh: true },
-      });
-      // Stagger the surfaces so three distinct bands sweep through the viewport.
-      ['tan', 'rose', 'cream'].forEach((color, index) => {
-        colorReveal.fromTo(select(`.journey-color-disc--${color}`), { scale: .018 }, {
-          scale: 1, duration: 1,
-        }, index * .22);
-      });
-      gsap.fromTo(select('.journey-portal-art'), { rotation: -65, scale: .72 }, {
-        rotation: 35, scale: 1.08, ease: 'none',
-        scrollTrigger: { trigger: events, start: 'top bottom', end: 'top -110%', scrub: 1.6 },
-      });
       // Animate the normalized SVG attribute, avoiding CSS pixel rounding.
       gsap.fromTo(select('[data-route-reveal]'), { attr: { 'stroke-dashoffset': 1 } }, {
         attr: { 'stroke-dashoffset': 0 }, ease: 'none',
         scrollTrigger: { trigger: element, start: 'top 70%', end: 'bottom 60%', scrub: .7 },
       });
-      element.querySelectorAll<HTMLElement>('[data-journey-drift]').forEach((asset, index) => {
-        const depth = Number(asset.dataset.journeyDrift);
-        gsap.fromTo(asset, { y: () => innerHeight * .16 * depth, rotation: index % 2 ? 12 : -14 }, {
-          y: () => -innerHeight * .36 * depth, rotation: index % 2 ? -18 : 16, ease: 'none',
-          scrollTrigger: { trigger: element, start: 'top bottom', end: 'bottom top', scrub: 1.3, invalidateOnRefresh: true },
-        });
-      });
     }, element);
-    window.addEventListener('resize', measure, { passive: true });
-    return () => { resize.disconnect(); window.removeEventListener('resize', measure); media.revert(); };
+    return () => media.revert();
   }, []);
 
   return <div className="chapter-journey" ref={root}>
     <div className="journey-backdrop" aria-hidden="true">
-      <div className="journey-color-anchor">
-        <div className="journey-color-disc journey-color-disc--tan"/>
-        <div className="journey-color-disc journey-color-disc--rose"/>
-        <div className="journey-color-disc journey-color-disc--cream"/>
-      </div>
       <svg className="journey-route" viewBox="0 0 1200 2400" preserveAspectRatio="none" fill="none">
         <defs><mask id={maskId}><path data-route-reveal d={route} pathLength="1" stroke="white" strokeWidth="14" strokeDasharray="1"/></mask></defs>
         <path d={route} className="journey-route-ghost"/>
         <path d={route} className="journey-route-ink" mask={`url(#${maskId})`}/>
       </svg>
-      <div className="journey-portal"><div className="journey-portal-art"><Orbit/></div></div>
-      <div className="journey-asset journey-asset--spark" data-journey-drift=".7"><Spark/></div>
-      <div className="journey-asset journey-asset--orbit" data-journey-drift=".65"><Orbit label="CREATE · CONNECT · EXPLORE"/></div>
-      <div className="journey-asset journey-asset--letter" data-journey-drift="1.3"><SealedLetter/></div>
-      <div className="journey-asset journey-asset--send" data-journey-drift="1.8"><Plane/></div>
       <i className="journey-route-dot journey-route-dot--one"/><i className="journey-route-dot journey-route-dot--two"/>
-      <EventsQuill/>
+      <EventsInkTrail />
     </div>
     {children}
   </div>;
@@ -116,20 +72,7 @@ export default function ChapterJourney({ children }: { children: ReactNode }) {
 
 /** A quieter reprise of the postal route before the reading room. */
 export function ChapterTrail() {
-  const root = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const media = gsap.matchMedia();
-    media.add('(prefers-reduced-motion: no-preference)', () => {
-      const select = gsap.utils.selector(root.current);
-      gsap.fromTo(select('.chapter-trail-seal'), { y: 32, rotation: -25 }, {
-        y: -28, rotation: 25, ease: 'none',
-        scrollTrigger: { trigger: root.current, start: 'top bottom', end: 'bottom top', scrub: 1 },
-      });
-    }, root);
-    return () => media.revert();
-  }, []);
-  return <div ref={root} className="chapter-trail" aria-hidden="true">
+  return <div className="chapter-trail" aria-hidden="true">
     <svg viewBox="0 0 1200 180" preserveAspectRatio="none" fill="none"><path d="M-30 30C300-80 310 230 620 120S970 20 1230 160"/></svg>
-    <div className="chapter-trail-seal"><Spark/></div>
   </div>;
 }

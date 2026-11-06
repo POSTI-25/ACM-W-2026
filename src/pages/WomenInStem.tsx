@@ -138,8 +138,6 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
       still: "(prefers-reduced-motion: reduce)" }, context => {
       const mobile = Boolean(context.conditions?.mobile), moving = Boolean(context.conditions?.moving);
       const scenes = Array.from(root.querySelectorAll<HTMLElement>(".scientist-section"));
-      const airs = scenes.map(scene => Array.from(scene.querySelectorAll<HTMLElement>(".scientist-air")));
-      let inView = false;
       let timeline: gsap.core.Timeline | undefined;
       const renderState = () => {
         const { index, progress } = stemSceneAt(timeline?.time() ?? 0, scientists.length);
@@ -149,10 +147,6 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
         root.dataset.stemPhase = progress < P.enterEnd ? "enter" : progress < P.spinEnd ? "spin"
           : progress < P.highlightEnd ? "highlight" : progress < P.mapEnd ? "map-lift"
           : progress < P.portraitEnd ? "portrait-lift" : progress < P.holdEnd ? "hold" : "exit";
-        airs.forEach((assets, i) => assets.forEach(asset => {
-          const floating = i === index && progress >= P.mapEnd;
-          asset.style.animationPlayState = moving && floating && inView && !document.hidden ? "running" : "paused";
-        }));
       };
       gsap.set(globeMotion, { y: 0, opacity: 1, scale: 1 });
       gsap.set(group.position, { y: 0 });
@@ -226,6 +220,10 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
           y: () => restingPhotoY() + innerHeight * travelEnd,
           duration, ease: "none",
         }, at(P.mapEnd));
+        const driftingArt = scene.querySelectorAll(".scientist-air");
+        timeline.fromTo(driftingArt, { y: 3, rotation: -.25 },
+          { y: -4, rotation: .25, duration: duration * .6 }, at(P.mapEnd))
+          .to(driftingArt, { y: 3, rotation: -.25, duration: duration * .4 }, at(P.mapEnd + duration * .6));
         // Sweep in from the lower-left while the vertical glide stays continuous.
         timeline.fromTo(photo, {
           x: () => photoX() - innerWidth * (mobile ? .28 : .22),
@@ -258,17 +256,9 @@ export default function WomenInStem({ globeRef, globeMotionRef }: {
       // Reveal the scene containers only after all assets are positioned offscreen.
       gsap.set(scenes, { visibility: "visible" });
       timeline?.set({}, {}, scientists.length);
-      const visibility = new IntersectionObserver(entries => {
-        inView = entries.some(entry => entry.isIntersecting); renderState();
-      });
-      visibility.observe(viewport);
-      document.addEventListener('visibilitychange', renderState);
       renderState();
       return () => {
-        visibility.disconnect();
-        document.removeEventListener('visibilitychange', renderState);
         globe.setCountryHighlight(null);
-        airs.flat().forEach(asset => asset.style.removeProperty('animation-play-state'));
       };
     }, root);
     return () => {

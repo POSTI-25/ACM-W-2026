@@ -41,20 +41,9 @@
   filter: brightness(0) saturate(100%) invert(16%) sepia(37%) saturate(2613%) hue-rotate(317deg) brightness(91%) contrast(94%);
 }
 .women-in-stem--sequence .scientist-text { z-index: 3; pointer-events: auto; }
-.scientist-air {
-  animation: scientist-air 5.8s ease-in-out infinite;
-  animation-play-state: paused;
-  transform-origin: center;
-}
-.scientist-air--country { animation-duration: 7.2s; animation-delay: -1.2s; }
-@keyframes scientist-air {
-  0%, 100% { transform: translateY(3px) rotate(-.25deg); }
-  50% { transform: translateY(-4px) rotate(.25deg); }
-}
 @media (prefers-reduced-motion: reduce) {
   .women-in-stem--sequence { height: auto; }
   .women-in-stem--sequence .scientist-viewport { position: relative; height: auto; }
   .women-in-stem--sequence .globe-sticky-container { position: sticky; height: 100svh; margin-bottom: -100svh; }
   .women-in-stem--sequence .scientist-section { position: relative; inset: auto; height: 100svh; }
-  .scientist-air { animation: none; }
 }

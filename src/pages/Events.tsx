@@ -5,7 +5,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import neuralHack from "../assets/NeuralHack.png";
 import insipher from "../assets/Inspiher.svg";
 import C2C from "../assets/C2C.png";
-import EventsTitle from "../components/EventsTitle";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -33,8 +32,8 @@ function useParallax(index: number) {
         ease: 'none',
         scrollTrigger: {
           trigger: card.parentElement,
-          start: 'top bottom',
-          end: 'bottom top',
+          start: 'top 112%',
+          end: 'bottom -12%',
           scrub: 1,
           invalidateOnRefresh: true,
           onToggle: self => { card.style.willChange = self.isActive ? 'transform' : 'auto'; },
@@ -193,8 +192,6 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-[#fff9e9] px-6 py-16 max-sm:px-4 max-sm:py-10">
       <div className="mx-auto w-full max-w-[min(92vw,87.5rem)]">
-        <EventsTitle/>
-
         <div className="events-cards flex flex-col gap-16 max-[56.25rem]:gap-12 max-sm:gap-9">
           {events.map((event, index) => {
             const reverse = index % 2 === 1;

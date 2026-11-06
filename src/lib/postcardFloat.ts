@@ -11,35 +11,19 @@ export function postcardMotion(compact: boolean, foreground: boolean) {
   };
 }
 
-/** The shared background/foreground drift used by the archival postcards. */
-export function floatPostcard(
-  card: HTMLElement,
-  trigger: HTMLElement,
-  options: {
-    compact: boolean;
-    foreground: boolean;
-    centered?: boolean;
-    x?: () => number;
-    y?: () => number;
-    rotation?: number;
-  },
-) {
-  const { compact, foreground, centered = false, rotation = 0 } = options;
-  const { fromY, toY, xDrift, rotationDrift } = postcardMotion(compact, foreground);
-  const origin = centered ? (fromY + toY) / 2 : 0;
-  return gsap.fromTo(card, {
-    y: () => (options.y?.() ?? 0) + innerHeight * (fromY - origin),
-    x: () => options.x?.() ?? 0,
-    rotation,
-  }, {
-    y: () => (options.y?.() ?? 0) + innerHeight * (toY - origin),
-    x: () => (options.x?.() ?? 0) + innerWidth * xDrift,
-    rotation: rotation + rotationDrift,
-    ease: 'none',
+export function floatPostcards(cards: NodeListOf<HTMLElement>, trigger: HTMLElement, compact: boolean) {
+  // A longer glide keeps the two depths in motion as the prints cross the viewport.
+  const timeline = gsap.timeline({
+    defaults: { ease: 'none', force3D: true, duration: 1 },
     scrollTrigger: {
-      trigger, start: 'top bottom', end: 'bottom top', scrub: 1,
+      trigger, start: 'top 112%', end: 'bottom -16%', scrub: .38,
       invalidateOnRefresh: true,
-      onToggle: self => { card.style.willChange = self.isActive ? 'transform' : 'auto'; },
     },
+  });
+  cards.forEach((card, index) => {
+    const { fromY, toY, xDrift, rotationDrift } = postcardMotion(compact, index === 1);
+    timeline.fromTo(card, { x: 0, y: () => innerHeight * fromY, rotation: 0 }, {
+      x: () => innerWidth * xDrift, y: () => innerHeight * toY, rotation: rotationDrift,
+    }, 0);
   });
 }

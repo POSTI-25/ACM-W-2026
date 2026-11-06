@@ -95,6 +95,14 @@
   background: linear-gradient(transparent, #fff1c533 24%, transparent 54%, #47261524 82%, transparent);
   pointer-events: none;
 }
+@media (prefers-reduced-motion: no-preference) {
+  .award-scroll { min-height: 245svh; }
+  .award-scroll .award-scene {
+    position: sticky; top: 0; display: grid; align-content: center;
+    min-height: 100svh; padding-block: clamp(.5rem, 3svh, 2rem);
+  }
+  .award-scroll .award-banner { width: min(100%, 1120px, 150svh); }
+}
 @media(max-width:600px) {
   .award-banner { aspect-ratio: 4 / 3; min-height: 260px; }
   .award-inscription { inset: 24% 9% 10%; }

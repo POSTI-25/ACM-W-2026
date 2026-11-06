@@ -1,4 +1,4 @@
-export const STEM_CHAPTER_SCREENS = 6;
+export const STEM_CHAPTER_SCREENS = 6.5;
 export const STEM_PHASE = {
   enterEnd: .1,
   spinEnd: .45,

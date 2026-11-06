@@ -1,8 +1,8 @@
-import { ropeDetails } from './juteRopeGeometry';
+import { ropeDetails, type Point } from './juteRopeGeometry';
 
-export function JuteRope({ d, ...props }: { d: string; 'data-loop-left'?: boolean; 'data-loop-right'?: boolean; 'data-pull-tail'?: boolean }) {
-  const { plies, hairs } = ropeDetails(d);
-  return <g {...props}>
+export function JuteRope({ d, points }: { d: string; points: readonly Point[] }) {
+  const { plies, hairs } = ropeDetails(points);
+  return <g>
     <path data-rope-base d={d} stroke="#3d2917" strokeWidth="7.4" opacity=".45" transform="translate(.5 1.1)"/>
     <path data-rope-base data-rope-spine d={d} stroke="#927044" strokeWidth="5.8"/>
     {plies.map((path, index) => <g key={index}>

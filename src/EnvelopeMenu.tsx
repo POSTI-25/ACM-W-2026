@@ -1,6 +1,7 @@
 import { useRef, useLayoutEffect, useState } from 'react';
 import gsap from 'gsap';
 import NavbarEnvelope from './components/NavbarEnvelope';
+import { scrollToPosition } from './lib/smoothScroll';
 
 // Keep the existing navigation stamps.
 import contributorsImg from './assets/contributors.svg';
@@ -183,8 +184,9 @@ export default function EnvelopeMenu() {
               const target = document.querySelector(card.link);
               if (target) {
                 event.preventDefault();
-                const top = target.getBoundingClientRect().top + window.scrollY;
-                window.scrollTo({ top, behavior: 'smooth' });
+                const headingOffset = Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+                const top = target.getBoundingClientRect().top + window.scrollY - headingOffset;
+                scrollToPosition(top);
               }
               close();
             }}

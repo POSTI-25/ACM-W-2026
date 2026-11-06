@@ -39,8 +39,7 @@ export function createAwardEngraving(banner: HTMLElement) {
       renderPen();
       gesture.setAttribute('stroke-dashoffset', String(1-motion.progress));
     };
-    timeline.call(() => { banner.dataset.unroll = `gesture-${line+1}`; }, [], start)
-      .to(motion, { progress: .88, duration: 2.05, ease: 'sine.inOut', onUpdate: trace }, start)
+    timeline.to(motion, { progress: .88, duration: 2.05, ease: 'sine.inOut', onUpdate: trace }, start)
       .to(motion, { progress: 1, duration: .3, ease: 'power2.in', onUpdate: trace }, start+2.05)
       .to(gesture, { opacity: .12, duration: .3 }, start+.15)
       .to(gesture, { opacity: 0, duration: .6 }, flickEnd);
@@ -63,8 +62,7 @@ export function createAwardEngraving(banner: HTMLElement) {
     if (next) {
       const from = poseAt(gesture, 1), to = poseAt(next, 0);
       const turn = { progress: 0 };
-      timeline.call(() => { banner.dataset.unroll = 'changing-line'; }, [], flickEnd)
-        .to(turn, { progress: 1, duration: 1.1, ease: 'sine.inOut', onUpdate: () => {
+      timeline.to(turn, { progress: 1, duration: 1.1, ease: 'sine.inOut', onUpdate: () => {
           const t = turn.progress, u = 1-t;
           // A lifted return arc connects the gestures without hiding or teleporting the nib.
           penState.x = u*u*u*from.x+3*u*u*t*(from.x+150)+3*u*t*t*(to.x-140)+t*t*t*to.x;
@@ -73,8 +71,7 @@ export function createAwardEngraving(banner: HTMLElement) {
           renderPen();
         } }, flickEnd);
     } else {
-      timeline.call(() => { banner.dataset.unroll = 'ink-settling'; }, [], flickEnd)
-        .to(penState, { x: artwork.width*1.01, y: artwork.height+45, tilt: -22,
+      timeline.to(penState, { x: artwork.width*1.01, y: artwork.height+45, tilt: -22, opacity: 0,
           duration: 1.1, ease: 'sine.inOut', onUpdate: renderPen }, flickEnd);
     }
   });

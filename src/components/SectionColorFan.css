@@ -1,0 +1,115 @@
+.section-color-fan {
+  position: relative;
+  isolation: isolate;
+  background: var(--fan-surface);
+}
+.section-color-fan:not([data-circle-section='contact']) { --fan-extra-scroll: 28svh; }
+
+/* The heading shares the circles' center; body content has its own space
+   below this stage, even while the scroll animation is catching up. */
+.section-color-fan-stage {
+  position: relative;
+  height: calc(210svh + var(--fan-extra-scroll, 0svh));
+  background: var(--fan-from);
+  pointer-events: none;
+}
+
+.section-color-fan-viewport {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100svh;
+  overflow: clip;
+  background: var(--fan-from);
+}
+
+.section-color-fan-anchor {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 0;
+  height: 0;
+}
+
+.section-color-fan-disc {
+  position: absolute;
+  left: calc(var(--fan-diameter) / -2);
+  top: calc(var(--fan-diameter) / -2);
+  width: var(--fan-diameter);
+  height: var(--fan-diameter);
+  border-radius: 50%;
+  transform: scale(0);
+  transform-origin: center;
+}
+
+.section-color-fan-disc--outer { background: var(--fan-outer); }
+.section-color-fan-disc--middle { background: var(--fan-middle); }
+.section-color-fan-disc--inner { background: var(--fan-surface); }
+
+.section-color-fan-heading {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 55%;
+  width: min(92%, 100rem);
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #580a0a;
+}
+
+.section-color-fan-heading .events-intro { padding-bottom: 0; }
+[data-circle-section='blogs'] .section-color-fan-heading .events-title {
+  font-size: clamp(4rem, 14vw, 11.875rem);
+}
+
+.section-color-fan-content {
+  position: relative;
+  display: flow-root;
+  padding-block: clamp(4rem, 12svh, 8rem);
+  background: var(--fan-surface);
+}
+
+.section-color-fan-content > :is(section, footer, .chapter-journey, .chapter-trail) {
+  position: relative;
+  z-index: 1;
+}
+
+.section-color-fan-art {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+/* Section backgrounds join the inner disc in the same flat color. */
+.section-color-fan-content .about,
+.section-color-fan-content #events > div,
+.section-color-fan-content .blog-reel,
+.section-color-fan-content #team > section,
+.section-color-fan-content #contributors > section,
+.section-color-fan-content > footer {
+  background-color: transparent !important;
+}
+
+.section-color-fan-content .chapter-trail { margin-top: 0; }
+
+.section-color-fan-content :is(#about, #events, #best-chapter, #blogs, #team, #contributors, #envelope-footer, #contact) {
+  scroll-margin-top: var(--fan-anchor-offset, 0px);
+}
+
+@media (max-width: 48rem) {
+  .section-color-fan-stage { height: calc(190svh + var(--fan-extra-scroll, 0svh)); }
+  .section-color-fan-content { padding-block: clamp(3rem, 9svh, 5rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-color-fan-stage { height: auto; background: var(--fan-surface); }
+  .section-color-fan-viewport {
+    position: relative;
+    height: auto;
+    padding: clamp(5rem, 15svh, 10rem) 0 clamp(2rem, 6svh, 4rem);
+    background: var(--fan-surface);
+  }
+  .section-color-fan-anchor { display: none; }
+  .section-color-fan-heading { position: relative; left: auto; top: auto; margin: 0 auto; transform: none; }
+}

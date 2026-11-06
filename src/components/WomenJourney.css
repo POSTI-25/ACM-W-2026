@@ -1,12 +1,22 @@
 .stem-globe-journey { position: relative; isolation: isolate; background: #fff9e9; }
-/* Keep the title's parchment and vignette behind the entire globe journey. */
-.stem-journey-paper {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  margin-bottom: -100svh;
-  z-index: -1;
+/* Slowly uncover the original STEM parchment, rather than tinting it a new
+   color. Full ivory across the join conceals the paper's original hard edge. */
+.stem-globe-journey::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * clamp(3rem, 12svh, 8rem)) 0 auto;
+  height: clamp(28rem, 72svh, 54rem);
+  z-index: 0;
   pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255, 249, 233, 0) 0%,
+    rgba(255, 249, 233, .85) 4%,
+    #fff9e9 8%,
+    #fff9e9 18%,
+    rgba(255, 249, 233, .8) 35%,
+    rgba(255, 249, 233, .4) 55%,
+    rgba(255, 249, 233, .1) 75%,
+    rgba(255, 249, 233, 0) 100%);
 }
 .stem-globe-journey > .stem-shared-globe {
   position: sticky;

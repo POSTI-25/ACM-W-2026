@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import NavbarEnvelope from "./NavbarEnvelope";
+import { scrollToPosition } from "../lib/smoothScroll";
 import "./MobileEnvelopeNavbar.css";
 
 const navItems = [
@@ -19,10 +20,11 @@ function scrollToSection(href: string) {
   if (!target) return;
 
   const navOffset = 56;
+  const headingOffset = Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
   const targetTop =
-    target.getBoundingClientRect().top + window.scrollY - navOffset;
+    target.getBoundingClientRect().top + window.scrollY - navOffset - headingOffset;
 
-  window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+  scrollToPosition(targetTop);
 }
 
 export default function MobileEnvelopeNavbar() {

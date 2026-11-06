@@ -1,25 +1,20 @@
 .chapter-journey {
   position: relative;
   isolation: isolate;
-  background: #fff9e9;
+  background: transparent;
   --journey-portal-y: 40%;
   --journey-events-y: 35%;
-  --journey-diameter: 5000px;
 }
 .chapter-journey > section { position: relative; z-index: 1; }
 .chapter-journey .about { background-color: transparent; background-image: none; }
 .chapter-journey #events > div { background-color: transparent; }
-.journey-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: #64262a; }
-.journey-color-anchor { position: absolute; top: var(--journey-portal-y); left: 50%; width: 0; height: 0; }
-.journey-color-disc { position: absolute; width: var(--journey-diameter); aspect-ratio: 1; left: calc(var(--journey-diameter) / -2); top: calc(var(--journey-diameter) / -2); border-radius: 50%; transform: scale(.018); }
-/* Postcard stock, a tint of the burgundy ink, then the cream stamp paper. */
-.journey-color-disc--tan { background: radial-gradient(circle, #c2a88f 0%, #b49880 75%); }
-.journey-color-disc--rose { background: radial-gradient(circle, #d9bfb8 0%, #c3a89f 75%); }
-.journey-color-disc--cream { background: radial-gradient(circle, #fff9e9 0%, #f2e8cf 75%); }
+.journey-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: var(--route-ink, #4d201e); }
 .journey-route { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .journey-route-ghost,.journey-route-ink { vector-effect: non-scaling-stroke; stroke: currentColor; stroke-width: 1.35; stroke-dasharray: 2.5 7; stroke-linecap: round; }
-.journey-route-ghost { opacity: .075; }
-.journey-route-ink { opacity: .56; }
+.journey-route-ghost { opacity: .22; }
+.journey-route-ink { opacity: .82; }
+.journey-flourish { position: absolute; top: 3%; left: 5%; width: 90%; height: min(38svh, 18rem); }
+.journey-flourish-ink { stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .65; }
 .journey-portal { position: absolute; top: var(--journey-portal-y); left: 50%; width: min(90vw, 56rem); aspect-ratio: 1; translate: -50% -50%; opacity: .32; }
 .journey-portal-art { width: 100%; height: 100%; }
 .journey-portal-art svg,.journey-asset svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
@@ -38,35 +33,13 @@
 .journey-route-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .45; }
 .journey-route-dot--one { top: 32%; left: 71%; }
 .journey-route-dot--two { top: 77%; left: 34%; }
-.chapter-trail { position: relative; height: clamp(6rem, 15vh, 10rem); margin-top: -3rem; pointer-events: none; color: #80514c; overflow: hidden; }
-.chapter-trail > svg { position: absolute; inset: 0; width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.2; stroke-dasharray: 2 7; opacity: .4; }
-.chapter-trail-seal { position: absolute; top: 25%; left: 61%; width: 90px; aspect-ratio: 1; }
-.chapter-trail-seal svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1; opacity: .55; }
+.chapter-trail { position: relative; height: clamp(6rem, 15vh, 10rem); margin-top: -3rem; pointer-events: none; color: var(--route-ink, #4d201e); overflow: hidden; }
+.chapter-trail > svg { position: absolute; inset: 0; width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.4; stroke-dasharray: 2 7; opacity: .75; }
 @media(max-width:48rem) {
   .journey-portal { width: 124vw; opacity: .24; }
   .journey-asset--ink { top: calc(var(--journey-events-y) + 150px); left: 4%; width: clamp(125px, 32vw, 170px); }
   .journey-asset--orbit { right: -42%; opacity: .16; }
   .journey-asset--letter { left: -24%; opacity: .18; }
-  .chapter-trail-seal { width: 66px; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .journey-color-anchor { display: none; }
-  .chapter-journey #events { background: #f2e8cf; }
-}
-
-/* Blogs reprises Events' three-circle sweep behind its heading and stamp fan. */
-.section-color-fan {
-  position: relative;
-  isolation: isolate;
-  background: #fff9e9;
-  --journey-portal-y: 24vh;
-  --journey-diameter: 1600px;
-}
-.section-color-fan-backdrop { position: absolute; inset: 0; z-index: 0; overflow: clip; pointer-events: none; }
-.section-color-fan > #blogs, .section-color-fan > .chapter-trail { position: relative; z-index: 1; }
-.section-color-fan #blogs > div { background-color: transparent !important; }
-@media (prefers-reduced-motion: reduce) {
-  .section-color-fan-backdrop .journey-color-anchor { display: none; }
 }
 
 .blog-transition-art { position: absolute; color: #64262a; pointer-events: none; transform-origin: center; }

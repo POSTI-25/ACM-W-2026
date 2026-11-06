@@ -193,29 +193,10 @@ export default function Footer() {
         width: "100%",
         overflow: "hidden",
         backgroundColor: "#B49880",
-        // Keep the gallery visually attached to the section above it.
-        // The cards already have a small internal bleed allowance.
         padding: "0",
-        border: "1px solid #000",
-        marginBottom: "-1px",
         boxSizing: "border-box",
       }}
     >
-      {/* Paper/noise texture approximating the SVG's filtered brown surface. */}
-      <div
-        style={{
-          pointerEvents: "none",
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-          opacity: 0.42,
-          mixBlendMode: "multiply",
-          backgroundImage:
-            "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"220\" viewBox=\"0 0 220 220\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.67\" numOctaves=\"3\" stitchTiles=\"stitch\" seed=\"838\"/%3E%3CfeColorMatrix type=\"saturate\" values=\"0\"/%3E%3C/filter%3E%3Crect width=\"220\" height=\"220\" fill=\"%233c2218\" filter=\"url(%23n)\" opacity=\"0.38\"/%3E%3C/svg%3E')",
-          backgroundRepeat: "repeat",
-        }}
-      />
-
       <div
         style={{
           position: "relative",
