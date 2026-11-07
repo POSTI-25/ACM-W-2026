@@ -1,0 +1,45 @@
+{
+  "collection": "ACM-W editorial engravings",
+  "references": [
+    {
+      "url": "https://kalso.vaangroup.com/",
+      "role": "Editorial pacing, photographic layering and restrained palette"
+    },
+    {
+      "url": "https://www.piercevaubel.com/cam/misc/semm.htm",
+      "role": "Historic bellows camera construction reference"
+    },
+    {
+      "url": "https://emuseum.tempe.gov/objects/25253/mounting-corners",
+      "role": "Archival photo mounting reference"
+    }
+  ],
+  "assets": [
+    {
+      "file": "camera-engraving.webp",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "bytes": 454146,
+      "transparent": true,
+      "intended_use": "Gallery chapter illustration matching the existing oxblood engravings",
+      "generation": "Built-in image_gen, original artwork",
+      "prompt": "Create ONE production-ready isolated website asset for an ACM-W student chapter's elegant archival correspondence website. Art direction: refined antique photographic archive meets scientific editorial, warm ivory #fff9e9, dark oxblood #580a0a, restrained oat and aged brass. Tactile and believable, not cute, not grunge, not kitsch. Orthographic flatbed/top-down view, no perspective tilt, no background, no scene, no props, no text, no watermark. Object fully visible with clear transparent margins on every side. An original late-19th-century wood-engraving style illustration of a single antique folding bellows camera viewed in restrained three-quarter profile, rectangular bellows body with extended lens, fine crosshatched lines and etched detail. Exactly one dark burgundy oxblood ink color #580a0a and transparent negative space. Dense enough to read at 180px yet delicate line variation. No photographic shading, no grey filled background, no labels, no tripod, no flowers, no frame. Match antique scientific plate engravings and letterpress stationery. Camera should fill most of square composition with airy outer transparent margin.",
+      "revision": "Reframed the same generated camera with transparent margin on all four sides.",
+      "revision_prompt": "Use the attached camera as an edit target. Keep its exact oxblood burgundy antique wood engraving style and the same complete bellows camera, including all fine hatching and hardware. Correct the framing only: shrink the complete object slightly to leave at least 12% genuinely transparent empty margin on ALL FOUR SIDES. The handle at the top and the entire bottom wooden bed, lens and right edge must be fully visible and completely surrounded by transparency. Absolutely no object part may touch the canvas edge. Keep the backdrop genuinely transparent, no frame, no text, no paper background, no new props. This is an isolated usable editorial website illustration, not a full-bleed crop."
+    },
+    {
+      "file": "microscope-engraving.webp",
+      "dimensions": [
+        1199,
+        1312
+      ],
+      "bytes": 302430,
+      "transparent": true,
+      "intended_use": "Women in STEM or research-focused editorial passage",
+      "generation": "Built-in image_gen, original artwork",
+      "prompt": "Create one isolated editorial illustration for a sophisticated ACM-W women-in-technology website. Subject: an elegant antique laboratory microscope in side three-quarter view, one complete instrument with eyepiece, objective, circular stage, focusing wheel and stable horseshoe foot. Style: original fine copperplate engraving, precise sparse cross-hatching and tapered ink strokes, monochrome deep burgundy #580a0a with genuinely transparent negative space and transparent background. Match vintage scientific publication plates. Restrained intellectual editorial aesthetic, clear silhouette that reads at 200px. Delicate rather than overly ornate. All highlights and open spaces between lines are transparent, not filled cream. Keep entire instrument within central 76% of the canvas, generous margins all sides. No surface, no photographic shading, no paper, no frame, no labels, no flowers, no tape, no scrapbook collage, no ornaments, no text, no logos. One illustration only."
+    }
+  ]
+}

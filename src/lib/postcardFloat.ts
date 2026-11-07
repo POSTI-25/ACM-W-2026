@@ -22,8 +22,8 @@ export function floatPostcards(cards: NodeListOf<HTMLElement>, trigger: HTMLElem
   });
   cards.forEach((card, index) => {
     const { fromY, toY, xDrift, rotationDrift } = postcardMotion(compact, index === 1);
-    timeline.fromTo(card, { x: 0, y: () => innerHeight * fromY, rotation: 0 }, {
-      x: () => innerWidth * xDrift, y: () => innerHeight * toY, rotation: rotationDrift,
+    timeline.fromTo(card, { x: 0, y: () => innerHeight * fromY, rotation: 0, '--photo-lift': 1 }, {
+      x: () => innerWidth * xDrift, y: () => innerHeight * toY, rotation: rotationDrift, '--photo-lift': 0,
     }, 0);
   });
 }

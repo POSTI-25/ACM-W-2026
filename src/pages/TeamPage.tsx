@@ -374,9 +374,11 @@ export default function TeamPage() {
           rise.fromTo(card, {
             y: () => depth * Math.min(window.innerHeight * (wide ? .29 : .18), wide ? 210 : 125),
             rotation: tilt * (wide ? 1 : .65),
+            '--card-lift': 1,
           }, {
             y: 0,
             rotation: 0,
+            '--card-lift': 0,
             duration,
           }, start)
             .fromTo(card, {
@@ -392,7 +394,7 @@ export default function TeamPage() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full overflow-visible bg-[#B49880] py-16 text-[#580A0A] sm:py-20"
+      className="site-team relative w-full overflow-visible bg-[#B49880] py-16 text-[#580A0A] sm:py-20"
     >
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-6">
         <div className="mt-12 flex w-full flex-col gap-10">

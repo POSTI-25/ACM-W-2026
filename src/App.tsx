@@ -10,13 +10,17 @@ import Events from "./pages/Events";
 import BestChapter from "./pages/BestChapter";
 import TeamPage from "./pages/TeamPage";
 import WomenJourney from "./components/WomenJourney";
-import Footer from "./components/Footer";
+import Gallery from "./components/Footer";
 import SectionColorFan from "./components/SectionColorFan";
-import ChapterJourney, { ChapterTrail } from "./components/ChapterJourney";
-import EventsTitle, { RollingSectionTitle } from "./components/EventsTitle";
+import ChapterJourney from "./components/ChapterJourney";
+import EventsTitle from "./components/EventsTitle";
+import EditorialChapter from "./components/EditorialChapter";
+import quill from "./assets/editorial/quill-inkwell.png";
+import camera from "./assets/editorial/archival/camera-engraving.webp";
 import { startSmoothScroll } from "./lib/smoothScroll";
 
 import "./App.css";
+import "./components/PaperSurfaces.css";
 
 function GlobalNavbar() {
   const [showNavbar, setShowNavbar] = useState(false);
@@ -78,7 +82,8 @@ export default function App() {
       <GlobalNavbar />
       <MobileEnvelopeNavbar />
       </>}
-      <SectionColorFan name="events" heading={<EventsTitle />} surface="#f2e8cf">
+      <SectionColorFan name="events" heading={<EventsTitle />} surface="#c9a09a" bands={['#b77d80', '#e4c5bc']}
+        eyebrow="01 / GATHERINGS" subtitle="Small sparks. Shared possibilities.">
         <ChapterJourney>
           <section id="events">
             <Events />
@@ -86,36 +91,38 @@ export default function App() {
         </ChapterJourney>
       </SectionColorFan>
 
-      <section id="best-chapter" className="bg-[#f2e8cf]">
+      <section id="best-chapter" style={{ backgroundColor: '#c9a09a' }}>
         <BestChapter />
       </section>
 
-      <SectionColorFan name="blogs" heading={<RollingSectionTitle word="BLOGS" sectionId="blogs" staticLetters={2} as="h2" />} from="#f2e8cf" artwork={false}>
-        <ChapterTrail />
-        <section id="blogs">
-          <BlogStamps />
-        </section>
-      </SectionColorFan>
+      <EditorialChapter name="blogs" number="02" title="BLOGS" line="THE READING ROOM"
+        from="#c9a09a" surface="#bd8588"
+        description="Ideas worth a closer look. Stories worth passing on." artwork={quill}>
+        <BlogStamps />
+      </EditorialChapter>
 
       <WomenJourney />
 
-      <SectionColorFan name="team" heading="THE TEAM" surface="#b49880" bands={['#d9bfb8', '#f2e8cf']}>
+      <SectionColorFan name="team" heading="THE TEAM" surface="#b58d91" bands={['#bd8588', '#e4c5bc']}
+        eyebrow="04 / OUR PEOPLE" subtitle="Different minds. A shared sense of possibility.">
         <section id="team">
           <TeamPage />
         </section>
       </SectionColorFan>
 
-      <SectionColorFan name="contributors" heading="CONTRIBUTORS" from="#b49880" surface="#b49880" bands={['#d9bfb8', '#f2e8cf']}>
-        <section id="contributors">
-          <ContributorsSection />
-        </section>
-      </SectionColorFan>
+      <EditorialChapter name="contributors" number="05" title="CONTRIBUTORS" line="BEHIND THESE PAGES" layout="type"
+        from="#b58d91" surface="#cda6b1"
+        description="A website, made together. Meet the people who brought this chapter to life.">
+        <ContributorsSection />
+      </EditorialChapter>
 
-      <SectionColorFan name="gallery" heading="GALLERY" from="#b49880" surface="#b49880" bands={['#d9bfb8', '#f2e8cf']}>
-        <Footer />
-      </SectionColorFan>
+      <EditorialChapter name="gallery" number="06" title="GALLERY" line="THE CHAPTER ARCHIVE" layout="image"
+        from="#cda6b1" surface="#e4c5bc"
+        description="The people, the moments, the stories between." artwork={camera}>
+        <Gallery />
+      </EditorialChapter>
 
-      <SectionColorFan name="contact" heading="CONTACT US" from="#b49880">
+      <SectionColorFan name="contact" heading="CONTACT US" from="#e4c5bc" bands={['#bd8588', '#cda6b1']}>
         <section id="envelope-footer">
           <EnvelopeFooter />
         </section>

@@ -1,412 +1,77 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-// Postcard frame PNGs — native landscape 276×216 (552×432 at 2×), no rotation needed.
-// The two doodled frames ship as a cleaned frame + a separate transparent doodle,
-// so the doodle can ride the border band instead of being buried under the photo.
-import framePink from "../assets/footer/Group 1000007240.png";
-import frameNavy from "../assets/footer/Group 1000007241.png";
-import framePinkClean from "../assets/footer/frame-pink-clean.png";
-import frameNavyClean from "../assets/footer/frame-navy-clean.png";
-import doodleLighthouse from "../assets/footer/doodle-lighthouse.png";
-import doodleBalloon from "../assets/footer/doodle-balloon.png";
-import leftArr from "../assets/leftArr.png";
-import rightArr from "../assets/rightArr.png";
-
-// Gallery photos — dynamically import the first 9 photos from the gallery folder.
-const photoModules = import.meta.glob<{ default: string }>(
-  "../assets/gallery/*.{jpg,jpeg,png,webp}",
-  { eager: true }
-);
-
-// Sort by filename to keep a stable postcard order.
-const sortedPhotos = Object.entries(photoModules)
-  .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
-  .map(([, mod]) => mod.default);
-
-// Ensure we always have 9 slots
-const galleryPhotos: (string | null)[] = Array.from({ length: 9 }, (_, i) =>
-  sortedPhotos[i] ?? null
-);
-
-/*
- * Frame geometry:
- *   Landscape frame PNG: 276 × 216 (552 × 432 at 2×) — already landscape,
- *   so the frame simply fills the card with no rotation.
- *
- * Each frame draws its own double border (outer colour ring + cream band +
- * inked inner rule), so the card needs no CSS borders of its own. The inner
- * white window measured off the PNGs starts at ~7% from the left/right edges
- * and ~9% from the top/bottom; the photo is inset slightly past that so the
- * ink stroke stays visible on top of it.
- */
-const FRAME_W = 276;
-const FRAME_H = 216;
-const CONTAINER_AR = `${FRAME_W} / ${FRAME_H}`; // "276 / 216"
-// Photo window inside the frame's inked rule
-const PHOTO_INSET_X = "7.8%";
-const PHOTO_INSET_Y = "9.8%";
-
-/*
- * Doodle placement. The left border band runs from the card edge to the inked
- * rule at 7.8%; its cream stretch (~2.5%–7%) is the readable part, so a doodle
- * this wide sits on the cream with a slight bite into the outer colour ring.
- * Both doodles are navy ink, which reads on the pink and the navy frame alike
- * because the band under them is cream either way.
- */
-const DOODLE_WIDTH = "5.6%";
-const DOODLE_LEFT = "1.6%";
-
-/* Alternating postcard frames — pink / navy, every one carrying a border doodle.
-   The doodle is an overlay rather than part of the frame art, so the two plain
-   frames get one too. Motif and vertical anchor both alternate, so no page of
-   three cards ever shows the same doodle in the same spot twice. */
-const postcards = [
-  { frame: framePink, doodle: doodleBalloon, doodleY: { bottom: "12%" } },
-  { frame: frameNavyClean, doodle: doodleBalloon, doodleY: { top: "12%" } },
-  { frame: framePinkClean, doodle: doodleLighthouse, doodleY: { bottom: "12%" } },
-  { frame: frameNavy, doodle: doodleLighthouse, doodleY: { top: "12%" } },
-] as const;
-
-const CARDS_PER_PAGE = 3;
+import { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './Gallery.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/**
- * Fraction of the footer's viewport journey held still at each end so the
- * first page is showing while the gallery scrolls into view, and the last
- * page is showing while it scrolls out.
- */
-const PAGE_LEAD = 0.2;
+const photoModules = import.meta.glob<{ default: string }>(
+  '../assets/gallery/*.{jpg,jpeg,png,webp}', { eager: true },
+);
+const photos = Object.entries(photoModules)
+  .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+  .map(([file, module], index) => ({
+    src: module.default,
+    width: file.includes('23.00.45') ? 1280 : 1600,
+    height: file.includes('23.00.45') ? 963 : 1200,
+    number: String(index + 1).padStart(2, '0'),
+  }));
+const passages = [
+  { title: 'In good company.', text: 'A chapter is made of the people who show up.' },
+  { title: 'Ideas find their people.', text: 'Conversations, collaborations, and everything in between.' },
+  { title: 'More than a moment.', text: 'The stories we take with us.' },
+];
+const spreads = Array.from({ length: Math.ceil(photos.length / 3) }, (_, index) => photos.slice(index * 3, index * 3 + 3));
 
-export default function Footer() {
-  const [currentPage, setCurrentPage] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLElement>(null);
-  // Page chosen by the scroll position, and the dot/arrow adjustment on top.
-  const linkedPageRef = useRef(0);
-  const pageOffsetRef = useRef(0);
-  const totalPages = Math.ceil(galleryPhotos.length / CARDS_PER_PAGE);
-
-  const scrollToPage = useCallback(
-    (page: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const boundedPage = Math.min(Math.max(page, 0), totalPages - 1);
-      const firstCard = container.querySelector(
-        '[data-card-index="0"]'
-      ) as HTMLElement;
-      if (!firstCard) return;
-      const cardWidth = firstCard.offsetWidth;
-      const gap =
-        parseFloat(
-          getComputedStyle(container.firstElementChild!).gap
-        ) || 32;
-      const targetScroll = boundedPage * (cardWidth * CARDS_PER_PAGE + gap * (CARDS_PER_PAGE - 1));
-      container.scrollTo({
-        left: targetScroll,
-        behavior: "smooth",
+/** The Gallery lives in normal page flow; all photographs remain available. */
+export default function Gallery() {
+  const root = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const element = root.current;
+    if (!element) return;
+    const media = gsap.matchMedia();
+    media.add({ moving: '(prefers-reduced-motion: no-preference)', wide: '(min-width: 48rem)' }, context => {
+      if (!context.conditions?.moving) return;
+      const wide = Boolean(context.conditions.wide);
+      element.querySelectorAll<HTMLElement>('.gallery-print').forEach((print, index) => {
+        const slot = index % 3;
+        const tilt = wide ? [-1.6, 2, -1.1][slot] : 0;
+        const motion = gsap.timeline({
+          scrollTrigger: { trigger: print, start: 'top 105%', end: 'bottom top', scrub: .5, invalidateOnRefresh: true },
+        });
+        motion.fromTo(print, {
+          y: () => (wide ? 66 : 28) + slot * (wide ? 20 : 6),
+          x: wide ? (slot === 1 ? 22 : -14) : 0,
+          rotation: tilt + (wide ? (slot === 1 ? 3 : -2) : 0),
+          '--photo-lift': 1,
+        }, {
+          x: 0, y: 0, rotation: tilt, '--photo-lift': 0,
+          duration: .44, ease: 'sine.out',
+        }, 0)
+          // Hold the composition for reading, then let the layers glide apart.
+          .to(print, { y: wide ? -26 - slot * 10 : -10, duration: .25, ease: 'none' }, .75);
       });
-      setCurrentPage(boundedPage);
-    },
-    [totalPages]
-  );
+    }, element);
+    return () => media.revert();
+  }, []);
 
-  // Track current page from scroll position
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let scrollTimeout: ReturnType<typeof setTimeout>;
-
-    const handleScroll = () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        const firstCard = container.querySelector(
-          '[data-card-index="0"]'
-        ) as HTMLElement;
-        if (!firstCard) return;
-        const cardWidth = firstCard.offsetWidth;
-        const gap =
-          parseFloat(
-            getComputedStyle(container.firstElementChild!).gap
-          ) || 32;
-        const pageWidth = cardWidth * CARDS_PER_PAGE + gap * (CARDS_PER_PAGE - 1);
-        const page = Math.round(container.scrollLeft / pageWidth);
-        setCurrentPage(Math.min(Math.max(page, 0), totalPages - 1));
-      }, 100);
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [totalPages]);
-
-  // Pages are scroll-linked rather than wheel-hijacked (wheel capture is
-  // patchy: a gesture already scrolling the page stays latched to the page).
-  // As the footer travels up the viewport the gallery pages rightwards;
-  // scrolling back pages it leftwards. Dots and arrows adjust an offset on
-  // top of the scroll-linked page so they keep working.
-  useEffect(() => {
-    const footer = footerRef.current;
-    if (!footer) return;
-
-    let lastPage = -1;
-    const apply = (progress: number) => {
-      const t = Math.min(1, Math.max(0, (progress - PAGE_LEAD) / (1 - PAGE_LEAD * 2)));
-      const linked = Math.min(totalPages - 1, Math.floor(t * totalPages));
-      linkedPageRef.current = linked;
-      const page = Math.min(Math.max(linked + pageOffsetRef.current, 0), totalPages - 1);
-      if (page !== lastPage) {
-        lastPage = page;
-        scrollToPage(page);
-      }
-    };
-
-    const trigger = ScrollTrigger.create({
-      trigger: footer,
-      start: "top bottom",
-      end: "bottom top",
-      onUpdate: (self) => apply(self.progress),
-      onRefresh: (self) => apply(self.progress),
-    });
-
-    return () => trigger.kill();
-  }, [scrollToPage, totalPages]);
-
-  const goToPage = (page: number) => {
-    const bounded = Math.min(Math.max(page, 0), totalPages - 1);
-    pageOffsetRef.current = bounded - linkedPageRef.current;
-    scrollToPage(bounded);
-  };
-
-  return (
-    <footer
-      ref={footerRef}
-      style={{
-        position: "relative",
-        zIndex: 50,
-        isolation: "isolate",
-        width: "100%",
-        overflow: "hidden",
-        backgroundColor: "#B49880",
-        padding: "0",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          zIndex: 10,
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          maxWidth: "min(72rem, calc(100vw - 2rem))",
-          padding: "0 1rem",
-        }}
-      >
-        {/* Scrollable postcard container */}
-        <div
-          ref={containerRef}
-          className="gallery-scroll-hide"
-          style={{
-            overflowX: "auto",
-            overflowY: "visible",
-            msOverflowStyle: "none",
-            scrollbarWidth: "none",
-            width: "min(100%, calc((clamp(16rem, 25vw, 21.5rem) * 3) + (clamp(1rem, 2.4vw, 2rem) * 2)))",
-            scrollSnapType: "x mandatory",
-            overscrollBehaviorX: "contain",
-          }}
-        >
-          <style>{`
-            .gallery-scroll-hide::-webkit-scrollbar { display: none; }
-          `}</style>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "clamp(1rem, 2.4vw, 2rem)",
-              width: "max-content",
-              padding: "0.25rem 0 0.5rem",
-            }}
-          >
-            {galleryPhotos.map((photo, index) => {
-              const { frame, doodle, doodleY } = postcards[index % postcards.length];
-              const isFirstInGroup = index % 3 === 0;
-
-              return (
-                <div
-                  key={index}
-                  data-card-index={index}
-                  style={{
-                    /* Landscape container matching the frame PNG: 276w x 216h */
-                    width: "clamp(16rem, 25vw, 21.5rem)",
-                    aspectRatio: CONTAINER_AR,
-                    flexShrink: 0,
-                    position: "relative",
-                    scrollSnapAlign: isFirstInGroup ? "start" : undefined,
-                    /* No background or border-radius — the frame PNG carries its
-                       own rounded outline and transparent corners. */
-                  }}
-                >
-                  {/* PNG postcard frame — fills the card, drawn behind the photo. */}
-                  <img
-                    src={frame}
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "fill",
-                      zIndex: 1,
-                      pointerEvents: "none",
-                    }}
-                  />
-
-                  {/* Photo layer — sits inside the frame's inner window. */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: PHOTO_INSET_Y,
-                      left: PHOTO_INSET_X,
-                      right: PHOTO_INSET_X,
-                      bottom: PHOTO_INSET_Y,
-                      borderRadius: "4px",
-                      overflow: "hidden",
-                      zIndex: 2,
-                      background: "#f8f1e4",
-                    }}
-                  >
-                    {photo ? (
-                      <img
-                        src={photo}
-                        alt={`Gallery photo ${index + 1}`}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          objectPosition: "center",
-                          display: "block",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#130043",
-                          fontSize: "0.85rem",
-                          fontFamily: "Kovanov, Georgia, serif",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        Photo {index + 1}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Doodle motif — rides the left border band, above the photo
-                      so it is never clipped by the photo window. */}
-                  {doodle && (
-                    <img
-                      src={doodle}
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                      style={{
-                        position: "absolute",
-                        left: DOODLE_LEFT,
-                        ...doodleY,
-                        width: DOODLE_WIDTH,
-                        height: "auto",
-                        zIndex: 3,
-                        pointerEvents: "none",
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
+  return <div ref={root} className="gallery-story">
+    {spreads.map((spread, index) => {
+      const passage = passages[index % passages.length];
+      return <div className="gallery-spread" key={spread[0].src}>
+        <p className="gallery-spread-index">FROM THE ARCHIVE / {String(index + 1).padStart(2, '0')}</p>
+        {spread.map((photo, slot) => <figure className={`gallery-print gallery-print--${slot}`} key={photo.src}>
+          <div className="gallery-image">
+            <img src={photo.src} width={photo.width} height={photo.height}
+              alt={`ACM-W VIT chapter archive photograph ${photo.number}`} loading="lazy" decoding="async" />
           </div>
+          <figcaption><span>ACM-W / VIT</span><span>ARCHIVE {photo.number}</span></figcaption>
+        </figure>)}
+        <div className="gallery-margin-note">
+          <p>{passage.title}</p>
+          <span>{passage.text}</span>
         </div>
-
-        {/* Pagination dots */}
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            marginTop: "clamp(0.5rem, 1.2vw, 0.875rem)",
-            /* Shift only the dots upward — a transform leaves the row's box in
-               flow, so the rule below the footer keeps its original position. */
-            transform: "translateY(-0.75rem)",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 0}
-            aria-label="Previous photos"
-            style={{ ...galleryArrowStyle, opacity: currentPage === 0 ? 0.3 : 1 }}
-          >
-            <img src={leftArr} alt="" style={{ width: "1.1rem", aspectRatio: "1 / 1", display: "block" }} />
-          </button>
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goToPage(i)}
-              aria-label={`Go to page ${i + 1}`}
-              style={{
-                width: currentPage === i ? "32px" : "10px",
-                height: "10px",
-                borderRadius: "5px",
-                border: "none",
-                background:
-                  currentPage === i ? "#580A0A" : "rgba(88, 10, 10, 0.35)",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                padding: 0,
-              }}
-            />
-          ))}
-          <button
-            type="button"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage >= totalPages - 1}
-            aria-label="Next photos"
-            style={{
-              ...galleryArrowStyle,
-              opacity: currentPage >= totalPages - 1 ? 0.3 : 1,
-            }}
-          >
-            <img src={rightArr} alt="" style={{ width: "1.1rem", aspectRatio: "1 / 1", display: "block" }} />
-          </button>
-        </div>
-      </div>
-    </footer>
-  );
+      </div>;
+    })}
+  </div>;
 }
-
-const galleryArrowStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  padding: "0.5rem",
-  margin: "0 0.25rem",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  transition: "opacity 0.2s ease",
-};

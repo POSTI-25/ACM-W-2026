@@ -161,6 +161,8 @@ function EventStamp({
 const events = [
   {
     title: "C2C",
+    category: "Build something together",
+    lead: "48 hours. Countless possibilities.",
     logo: C2C,
     rotation: 6.5,
     description:
@@ -168,6 +170,8 @@ const events = [
   },
   {
     title: "Inspiher",
+    category: "Conversations that stay with you",
+    lead: "Her story. Your next possibility.",
     logo: insipher,
     rotation: -6.5,
     description:
@@ -175,6 +179,8 @@ const events = [
   },
   {
     title: "Neural Hack",
+    category: "A different way to think",
+    lead: "Better data. Bolder ideas.",
     logo: neuralHack,
     rotation: 7,
     description:
@@ -190,7 +196,7 @@ export default function EventsPage() {
   const parallaxRefs = [stamp1, stamp2, stamp3];
 
   return (
-    <div className="min-h-screen bg-[#fff9e9] px-6 py-16 max-sm:px-4 max-sm:py-10">
+    <div className="events-editorial min-h-screen bg-[#fff9e9] px-6 py-16 max-sm:px-4 max-sm:py-10">
       <div className="mx-auto w-full max-w-[min(92vw,87.5rem)]">
         <div className="events-cards flex flex-col gap-16 max-[56.25rem]:gap-12 max-sm:gap-9">
           {events.map((event, index) => {
@@ -226,14 +232,16 @@ export default function EventsPage() {
                 </div>
 
                 <div
-                  className={`max-[56.25rem]:text-center ${
+                  className={`event-copy max-[56.25rem]:text-center ${
                     reverse ? "order-1 max-[56.25rem]:order-none" : ""
                   }`}
                 >
+                  <p className="event-index">{String(index + 1).padStart(2, '0')} / {event.category}</p>
                   <h2 className="mb-4 font-[Kovanov,Georgia,serif] text-[clamp(1.5rem,3vw,2rem)] font-bold text-[#5B0F0F]">
                     {event.title}
                   </h2>
-                  <p className="font-[Quicksand,Arial,sans-serif] text-[clamp(1.0625rem,1.5vw,1.25rem)] font-semibold [font-synthesis:weight] leading-[1.85] text-[#241010] max-sm:leading-[1.75]">
+                  <p className="event-lead">{event.lead}</p>
+                  <p className="event-description">
                     {event.description}
                   </p>
                 </div>

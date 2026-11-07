@@ -4,6 +4,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Globe3D, { type Globe3DHandle } from "../assets/globe_3d";
 import TitleCard from "./TitleCard";
 import WomenInStem from "../pages/WomenInStem";
+import microscope from "../assets/editorial/archival/microscope-engraving.webp";
 import "./WomenJourney.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -54,7 +55,17 @@ export default function WomenJourney() {
         </div>
       </div>
     </div>
-    <section ref={titleRef} id="title-card-section"><TitleCard /></section>
+    <section ref={titleRef} id="title-card-section">
+      <div className="stem-preface">
+        <div className="stem-preface-copy">
+          <p className="chapter-eyebrow"><span>03</span><span>WOMEN IN STEM</span></p>
+          <h2>Progress has a human story.</h2>
+          <p>Meet the women whose ideas expanded what was possible.</p>
+        </div>
+        <img src={microscope} width="1199" height="1312" alt="" loading="lazy" decoding="async" />
+      </div>
+      <TitleCard />
+    </section>
     <section id="women-in-stem">
       <WomenInStem globeRef={globeRef} globeMotionRef={globeMotionRef} />
     </section>

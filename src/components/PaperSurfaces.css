@@ -1,0 +1,37 @@
+/* A small seamless material tile, painted behind the content. Static grain
+   avoids a full-screen animated filter and never tints photos or controls. */
+.site-main { --paper-grain: url('../assets/editorial/paper-grain.svg'); }
+.site-main,
+.site-main :is(.about, .section-color-fan-stage, .section-color-fan-viewport,
+  .section-color-fan-disc, .section-color-fan-content, #best-chapter,
+  .editorial-chapter, .stem-globe-journey, .stem-preface) {
+  background-image: var(--paper-grain);
+  background-repeat: repeat;
+  background-size: 192px 192px;
+}
+
+/* The copy's backing follows the same stock instead of leaving a flat patch. */
+.site-main .events-editorial .event-copy {
+  background-image: var(--paper-grain);
+  background-size: 192px 192px;
+}
+
+/* Clay red needs a deeper ink than the original burgundy. These variables
+   also cover the reel controls; postcard faces keep their own paper and ink. */
+.site-main .chapter-eyebrow { --chapter-label: #48241f; }
+#blogs { --chapter-ink: #24100d; }
+#blogs .chapter-eyebrow { --chapter-label: #24100d; }
+#blogs #blog-fan-hint,
+#blogs .blog-reel > p,
+#blogs .blog-page-number { color: var(--chapter-ink) !important; }
+#blogs .blog-page-number:hover { text-decoration: underline; text-underline-offset: .4em; }
+#blogs .blog-page-number:focus-visible { outline-color: var(--chapter-ink); }
+
+/* Blend within the introductory panel, using the same grain on both sides.
+   No overlay spills into Blogs or creates an untextured ivory strip. */
+.site-main #title-card-section .stem-preface {
+  background-color: #fff9e9;
+  background-image: var(--paper-grain), linear-gradient(180deg, #bd8588 0%, #dfb9b5 38%, #f4e2d6 72%, #fff9e9 100%);
+  background-size: 192px 192px, 100% 100%;
+  background-repeat: repeat, no-repeat;
+}

@@ -125,10 +125,10 @@ export default function BlogStamps() {
   const bottomPadding = Math.max(32, viewport.h * .05);
   const sidePadding = compact ? 16 : Math.max(32, viewport.w*.035);
   const controlsSpace = compact ? 172 : 110;
-  // Give the desktop hand a little more presence while retaining seven cards.
-  const scale = (compact ? 1 : 1.08) * Math.min(1,
+  // Enlarge the fan while reserving its complete swept height below.
+  const scale = (compact ? 1.08 : 1.25) * Math.min(1,
     (viewport.w-2*sidePadding)/(maxX-minX),
-    Math.max(160, viewport.h-controlsSpace-bottomPadding)/(layoutMaxY-minY));
+    Math.max(160, viewport.h * 1.12-controlsSpace-bottomPadding)/(layoutMaxY-minY));
   const fanHeight = (maxY - minY) * scale;
   const fanAnchorBottom = bottomPadding + maxY * scale;
   const sectionHeight = Math.max(viewport.h * (compact ? .6 : .85),
@@ -137,9 +137,9 @@ export default function BlogStamps() {
   // Compensate gently for the scene scale so compact cards keep legible type.
   const contentScale = Math.min(1.5, Math.max(1, 1/Math.sqrt(scale)));
   const imageHeight = Math.round(cardH * 0.5);
-  const titleSize = 14 * contentScale;
-  const authorSize = 10 * contentScale;
-  const metaSize = 8 * contentScale;
+  const titleSize = 16 * contentScale;
+  const authorSize = 11 * contentScale;
+  const metaSize = 9 * contentScale;
   const bodySize = 9 * contentScale;
   const linkSize = 10 * contentScale;
 

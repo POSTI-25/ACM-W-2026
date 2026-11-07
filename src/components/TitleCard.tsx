@@ -8,8 +8,8 @@ const FONT = "'Playfair Display', Georgia, serif";
 const COLOR = "#5a0a10";
 
 function TextBlock({ flip = false }: { flip?: boolean }) {
-  const smallSz = "clamp(5.5rem, 9vw, 7.6rem)";
-  const largeSz = "clamp(13rem, 21vw, 18.4rem)";
+  const smallSz = "var(--stem-small, clamp(5.5rem, 9vw, 7.6rem))";
+  const largeSz = "var(--stem-large, clamp(13rem, 21vw, 18.4rem))";
 
   const smallStyle: React.CSSProperties = {
     fontFamily: FONT,
@@ -64,15 +64,22 @@ export default function TitleCard() {
     const topBlock = topBlockRef.current;
     const botBlock = botBlockRef.current;
     if (!section || !topBlock || !botBlock) return;
-    const tl = gsap.timeline({
-      defaults: { ease: "none" },
-      scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.6 },
-    });
-    tl.fromTo(topBlock, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power2.out" }, 0.08)
-      .fromTo(botBlock, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power2.out" }, 0.14)
-      .fromTo(topBlock, { x: "-6vw" }, { x: "12vw", duration: 1 }, 0)
-      .fromTo(botBlock, { x: "6vw" }, { x: "-12vw", duration: 1 }, 0);
-    return () => { tl.scrollTrigger?.kill(); tl.kill(); };
+    const media = gsap.matchMedia();
+    media.add({ moving: '(prefers-reduced-motion: no-preference)', still: '(prefers-reduced-motion: reduce)' }, context => {
+      if (!context.conditions?.moving) {
+        gsap.set([topBlock, botBlock], { opacity: 1, x: 0 });
+        return;
+      }
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.6 },
+      });
+      tl.fromTo(topBlock, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power2.out" }, 0.08)
+        .fromTo(botBlock, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power2.out" }, 0.14)
+        .fromTo(topBlock, { x: "-6vw" }, { x: "12vw", duration: 1 }, 0)
+        .fromTo(botBlock, { x: "6vw" }, { x: "-12vw", duration: 1 }, 0);
+    }, section);
+    return () => media.revert();
   }, []);
 
   return (

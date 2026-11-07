@@ -19,12 +19,15 @@ type SectionColorFanProps = {
   bands?: readonly [string, string];
   blogArt?: boolean;
   artwork?: boolean;
+  eyebrow?: string;
+  subtitle?: string;
 };
 
 /** The chapter heading rides over the circles; its body follows in normal flow. */
 export default function SectionColorFan({
   children, name, heading, headingLines, from = '#fff9e9', surface = '#fff9e9',
   bands = ['#b49880', '#d9bfb8'], blogArt = false, artwork = true,
+  eyebrow, subtitle,
 }: SectionColorFanProps) {
   const root = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -150,9 +153,11 @@ export default function SectionColorFan({
         </div>
         {artwork && <CircularTransitionArt section={name} trailsOnly />}
         <div className="section-color-fan-heading" data-fan-heading>
+          {eyebrow && <p className="chapter-eyebrow">{eyebrow}</p>}
           {typeof heading === 'string'
             ? <RollingSectionTitle word={heading} lines={headingLines} sectionId={name} as="h2" />
             : heading}
+          {subtitle && <p className="chapter-subtitle">{subtitle}</p>}
         </div>
       </div>
     </div>
